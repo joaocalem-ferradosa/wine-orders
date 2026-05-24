@@ -223,37 +223,42 @@
   color: var(--paper);
 }
 
-/* In-card qty stepper — fixed height, matches the Adicionar caixa button. */
+/* In-card qty stepper — light theme, matches the basket stepper. */
 .dir-b .wall .qty.card-qty {
   display: inline-flex; align-items: stretch;
-  background: var(--ink);
-  color: var(--paper);
-  border: 1px solid transparent;
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px solid var(--ink);
   height: 42px;
   font-family: 'DM Mono', monospace;
-  font-size: 11px;
+  font-size: 12px;
 }
 .dir-b .wall .qty.card-qty span {
-  display: inline-flex; align-items: center; justify-content: center;
+  flex: 0 0 auto;
+  display: flex; align-items: center; justify-content: center;
+  height: 100%;
   padding: 0 14px;
   line-height: 1;
   cursor: pointer;
   user-select: none;
   letter-spacing: 0.06em;
-  transition: background 0.18s;
+  transition: background 0.18s, color 0.18s;
 }
 @media (hover: hover) and (pointer: fine) {
-  .dir-b .wall .qty.card-qty span:hover { background: var(--wine); }
+  .dir-b .wall .qty.card-qty span:not(.n):hover {
+    background: var(--ink);
+    color: var(--paper);
+  }
 }
 .dir-b .wall .qty.card-qty .n {
-  background: var(--paper);
-  color: var(--ink);
   padding: 0 14px;
+  border-left: 1px solid var(--rule);
+  border-right: 1px solid var(--rule);
   cursor: default;
   font-weight: 500;
-  min-width: 38px;
+  min-width: 40px;
 }
-.dir-b .wall .qty.card-qty .n:hover { background: var(--paper); }
+.dir-b .wall .qty.card-qty .n:hover { background: transparent; }
 
 @keyframes pill-bump {
   0%   { transform: scale(1); }
