@@ -8,7 +8,7 @@
 // handles all Stripe API calls server-side), but is kept here so the page
 // can later embed Stripe Elements if we ever want that.
 
-window.CHECKOUT_URL = 'https://wine-orders-checkout.REPLACE-ME.workers.dev/checkout';
+window.CHECKOUT_URL = 'https://wine-orders-checkout.ferradosa.workers.dev/checkout';
 
 window.STRIPE_PUBLISHABLE_KEY = 'pk_test_51TacDeV052YnjDnXXJabEzLQdjd9HI6KznKHMF2UpgZfRJDB66Wo5m4ZZQ8AGAHTijox9G5moR5tnvZMihGd6ua100kiNaRTz4';
 
