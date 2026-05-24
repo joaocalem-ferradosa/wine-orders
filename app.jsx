@@ -50,14 +50,7 @@ function PriceBlock({ perBottle, t }) {
   );
 }
 
-function WineCard({ wine, varietal, t, onAdd }) {
-  const [added, setAdded] = useState(false);
-  const handleClick = () => {
-    if (!wine.stock) return;
-    onAdd();
-    setAdded(true);
-    setTimeout(() => setAdded(false), 1000);
-  };
+function WineCard({ wine, varietal, t, cartQty, onAdd, onDec }) {
   return (
     <div className={'col' + (wine.stock ? '' : ' oos')}>
       <div className="ph">
@@ -73,13 +66,17 @@ function WineCard({ wine, varietal, t, onAdd }) {
       </div>
       <div className="row">
         <PriceBlock perBottle={wine.price} t={t} />
-        <button
-          className={added ? 'added' : ''}
-          onClick={handleClick}
-          disabled={!wine.stock}
-        >
-          {!wine.stock ? t.outOfStock : added ? t.addedToCart : t.addCase}
-        </button>
+        {!wine.stock ? (
+          <button disabled>{t.outOfStock}</button>
+        ) : cartQty > 0 ? (
+          <div className="qty card-qty" role="group" aria-label={t.addCase}>
+            <span onClick={onDec}>−</span>
+            <span className="n">{cartQty}</span>
+            <span onClick={onAdd}>+</span>
+          </div>
+        ) : (
+          <button onClick={onAdd}>{t.addCase}</button>
+        )}
       </div>
     </div>
   );
@@ -102,7 +99,7 @@ function PromoBanner({ lang }) {
   );
 }
 
-function Landing({ cart, addToCart, lang, setLang, onGoCheckout, promoActive }) {
+function Landing({ cart, addToCart, decrementCart, lang, setLang, onGoCheckout, promoActive }) {
   const t = window.STRINGS[lang];
   const copy = window.WINE_COPY[lang];
   const count = cart.reduce((n, l) => n + l.qty, 0);
@@ -134,15 +131,20 @@ function Landing({ cart, addToCart, lang, setLang, onGoCheckout, promoActive }) 
       </header>
 
       <section className="wall" id="shop">
-        {window.WINES.map((w) => (
-          <WineCard
-            key={w.id}
-            wine={w}
-            varietal={copy[w.id].varietal}
-            t={t}
-            onAdd={() => addToCart(w)}
-          />
-        ))}
+        {window.WINES.map((w) => {
+          const line = cart.find((l) => l.id === w.id);
+          return (
+            <WineCard
+              key={w.id}
+              wine={w}
+              varietal={copy[w.id].varietal}
+              t={t}
+              cartQty={line ? line.qty : 0}
+              onAdd={() => addToCart(w)}
+              onDec={() => decrementCart(w.id)}
+            />
+          );
+        })}
       </section>
 
       <footer className="footer">
@@ -195,6 +197,14 @@ function Checkout({ cart, setCart, lang, setLang, onBack, promoActive }) {
   const t = window.STRINGS[lang];
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
+
+  // Reset submitting state when the user returns from the Stripe redirect
+  // (browser back / bfcache restore).
+  useEffect(() => {
+    const onShow = () => setSubmitting(false);
+    window.addEventListener('pageshow', onShow);
+    return () => window.removeEventListener('pageshow', onShow);
+  }, []);
 
   const subtotalFull = cart.reduce((s, l) => s + l.qty * window.boxPrice(l.price), 0);
   const subtotalNow = cart.reduce(
@@ -418,6 +428,13 @@ function App() {
       if (ex) return c.map((l) => (l.id === w.id ? { ...l, qty: l.qty + 1 } : l));
       return [...c, { ...w, qty: 1 }];
     });
+  const decrementCart = (id) =>
+    setCart((c) => {
+      const ex = c.find((l) => l.id === id);
+      if (!ex) return c;
+      if (ex.qty <= 1) return c.filter((l) => l.id !== id);
+      return c.map((l) => (l.id === id ? { ...l, qty: l.qty - 1 } : l));
+    });
 
   return (
     <>
@@ -435,6 +452,7 @@ function App() {
         <Landing
           cart={cart}
           addToCart={addToCart}
+          decrementCart={decrementCart}
           lang={lang}
           setLang={setLang}
           onGoCheckout={() => setView('checkout')}

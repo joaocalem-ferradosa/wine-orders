@@ -2,7 +2,7 @@
 window.STRINGS = {
   pt: {
     cart: 'Cesto',
-    caseOf6: 'Caixa · 6 garrafas',
+    caseOf6: 'Caixa',
     perBottle: '/ garrafa',
     addCase: 'Adicionar caixa',
     addedToCart: 'Adicionado ✓',
@@ -56,7 +56,7 @@ window.STRINGS = {
   },
   en: {
     cart: 'Cart',
-    caseOf6: 'Case · 6 bottles',
+    caseOf6: 'Case',
     perBottle: '/ bottle',
     addCase: 'Add case',
     addedToCart: 'Added ✓',
