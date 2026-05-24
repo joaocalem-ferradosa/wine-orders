@@ -1,21 +1,21 @@
 // Catalog. Prices are per bottle, VAT included. Boxes of 6 only.
 window.WINES = [
   {
-    id: 'branco',
-    name: 'Ferradosa',
-    sub: 'Branco',
-    year: '2022',
-    img: 'assets/wines/ferradosa-branco.png',
-    price: 17.45,
-    stock: true,
-  },
-  {
     id: 'rose',
     name: 'Ferradosa',
     sub: 'Rosé',
     year: '2024',
     img: 'assets/wines/ferradosa-rose.png',
     price: 10.45,
+    stock: true,
+  },
+  {
+    id: 'branco',
+    name: 'Ferradosa',
+    sub: 'Branco',
+    year: '2022',
+    img: 'assets/wines/ferradosa-branco.png',
+    price: 17.45,
     stock: true,
   },
   {
