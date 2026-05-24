@@ -1,0 +1,38 @@
+{
+  "mode": "TEST",
+  "generated_at": "2026-05-24T18:59:02.941Z",
+  "wines": {
+    "branco": {
+      "wine_id": "branco",
+      "product_id": "prod_UZqwcmkN9lWP8M",
+      "price_id": "price_1TahEjV052YnjDnXDhVYf7UX",
+      "box_price_cents": 10470
+    },
+    "rose": {
+      "wine_id": "rose",
+      "product_id": "prod_UZqwXqPfND7J77",
+      "price_id": "price_1TahEkV052YnjDnXFKJ83JKu",
+      "box_price_cents": 6270
+    },
+    "quinta": {
+      "wine_id": "quinta",
+      "product_id": "prod_UZqwxtLs74IvFY",
+      "price_id": "price_1TahEmV052YnjDnXOUwQfeXa",
+      "box_price_cents": 10770
+    },
+    "tinto": {
+      "wine_id": "tinto",
+      "product_id": "prod_UZqwYxwfe6cjac",
+      "price_id": "price_1TahEnV052YnjDnXdUhD2ccR",
+      "box_price_cents": 16170
+    }
+  },
+  "promotion": {
+    "coupon_id": "7MOgl4wx",
+    "promotion_code_id": "promo_1TahEoV052YnjDnXVk0q5vXy",
+    "code": "LDW"
+  },
+  "shipping": {
+    "shipping_rate_id": "shr_1TahEoV052YnjDnXqjKg2AFq"
+  }
+}

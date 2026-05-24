@@ -3,6 +3,20 @@
 
 const { useState, useEffect } = React;
 
+// ── Stripe price IDs (written by scripts/setup-stripe.mjs) ────────────
+window.STRIPE_PRICES = null;
+const stripePricesReady = fetch('stripe-prices.json', { cache: 'no-store' })
+  .then((r) => (r.ok ? r.json() : null))
+  .then((j) => { window.STRIPE_PRICES = j; return j; })
+  .catch(() => null);
+
+function getPromoFromUrl() {
+  try {
+    const p = new URLSearchParams(window.location.search).get('code');
+    return p ? p.toUpperCase() : null;
+  } catch (e) { return null; }
+}
+
 function LangToggle({ lang, setLang }) {
   return (
     <div className="lang-toggle" role="group" aria-label="Language">
@@ -55,12 +69,31 @@ function WineCard({ wine, varietal, t, onAdd }) {
   );
 }
 
-function Landing({ cart, addToCart, lang, setLang, onGoCheckout }) {
+function PromoBanner({ lang }) {
+  const isPt = lang === 'pt';
+  return (
+    <div className="promo-banner">
+      <strong>LDW PROMO · 30%</strong>
+      <span>
+        {isPt
+          ? 'Use o código '
+          : 'Use the code '}
+        <code>LDW</code>
+        {isPt
+          ? ' no checkout · válido até 14 Jun 2026'
+          : ' at checkout · valid until 14 Jun 2026'}
+      </span>
+    </div>
+  );
+}
+
+function Landing({ cart, addToCart, lang, setLang, onGoCheckout, promo }) {
   const t = window.STRINGS[lang];
   const copy = window.WINE_COPY[lang];
   const count = cart.reduce((n, l) => n + l.qty, 0);
   return (
     <div className="dir-b" data-screen-label="Landing">
+      {promo === 'LDW' && <PromoBanner lang={lang} />}
       <header className="nav">
         <div className="logomark">
           FERRADOSA
@@ -116,9 +149,11 @@ function CartLine({ line, t, setQty }) {
   );
 }
 
-function Checkout({ cart, setCart, lang, setLang, onBack }) {
+function Checkout({ cart, setCart, lang, setLang, onBack, promo }) {
   const t = window.STRINGS[lang];
   const [sameAddr, setSameAddr] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
 
   const subtotal = cart.reduce(
     (s, l) => s + l.qty * window.boxPrice(l.price),
@@ -134,14 +169,62 @@ function Checkout({ cart, setCart, lang, setLang, onBack }) {
     }
   };
 
-  const handlePlaceOrder = () => {
-    // TODO: replace with stripe.redirectToCheckout once Stripe is set up
-    // (lineItems built from `cart` + price IDs from Stripe dashboard).
-    alert('Stripe checkout will go here. Cart: ' + JSON.stringify(cart));
+  const handlePlaceOrder = async () => {
+    setError(null);
+    if (cart.length === 0) return;
+
+    const prices = window.STRIPE_PRICES || (await stripePricesReady);
+    if (!prices || !prices.wines) {
+      setError(lang === 'pt'
+        ? 'Pagamentos ainda não configurados. Tente novamente em breve.'
+        : 'Payments not yet configured. Please try again shortly.');
+      return;
+    }
+    if (!window.STRIPE_PUBLISHABLE_KEY || window.STRIPE_PUBLISHABLE_KEY.includes('REPLACE')) {
+      setError(lang === 'pt'
+        ? 'Chave Stripe em falta no site. Contacte-nos para concluir a encomenda.'
+        : 'Stripe key missing on site. Contact us to complete the order.');
+      return;
+    }
+
+    const lineItems = cart
+      .map((line) => {
+        const ref = prices.wines[line.id];
+        return ref ? { price: ref.price_id, quantity: line.qty } : null;
+      })
+      .filter(Boolean);
+
+    if (lineItems.length === 0) {
+      setError(lang === 'pt'
+        ? 'Não foi possível encontrar os preços para os vinhos no cesto.'
+        : 'Could not find Stripe prices for the wines in the cart.');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const stripe = window.Stripe(window.STRIPE_PUBLISHABLE_KEY);
+      const { error: stripeError } = await stripe.redirectToCheckout({
+        lineItems,
+        mode: 'payment',
+        successUrl: window.STRIPE_SUCCESS_URL,
+        cancelUrl: window.STRIPE_CANCEL_URL + (promo ? '?code=' + promo : ''),
+        shippingAddressCollection: { allowedCountries: ['PT'] },
+        locale: lang === 'en' ? 'en' : 'pt',
+      });
+      if (stripeError) {
+        setError(stripeError.message);
+        setSubmitting(false);
+      }
+    } catch (e) {
+      setError(e.message || String(e));
+      setSubmitting(false);
+    }
   };
 
   return (
     <div className="dir-b" data-screen-label="Checkout">
+      {promo === 'LDW' && <PromoBanner lang={lang} />}
       <header className="nav">
         <button className="back-link" onClick={onBack}>{t.backToShop}</button>
         <div className="logomark center-logomark">
@@ -219,10 +302,13 @@ function Checkout({ cart, setCart, lang, setLang, onBack }) {
           <button
             className="place"
             onClick={handlePlaceOrder}
-            disabled={cart.length === 0}
+            disabled={cart.length === 0 || submitting}
           >
-            {t.placeOrder}
+            {submitting
+              ? (lang === 'pt' ? 'A redireccionar…' : 'Redirecting…')
+              : t.placeOrder}
           </button>
+          {error && <p className="checkout-error">{error}</p>}
           <p className="contact-note">{t.contactNote}</p>
         </aside>
       </div>
@@ -306,6 +392,7 @@ function App() {
   const [cart, setCart] = useState(loadCart);
   const [lang, setLang] = useState('pt');
   const [view, setView] = useState('landing');
+  const [promo] = useState(getPromoFromUrl);
   const [adult, setAdult] = useState(() => {
     try { return !!localStorage.getItem('ferradosa-age-confirmed'); }
     catch (e) { return false; }
@@ -335,6 +422,7 @@ function App() {
           lang={lang}
           setLang={setLang}
           onBack={() => setView('landing')}
+          promo={promo}
         />
       ) : (
         <Landing
@@ -343,6 +431,7 @@ function App() {
           lang={lang}
           setLang={setLang}
           onGoCheckout={() => setView('checkout')}
+          promo={promo}
         />
       )}
     </>

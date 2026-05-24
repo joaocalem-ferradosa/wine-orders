@@ -1,0 +1,11 @@
+{
+  "name": "wine-orders",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "setup-stripe": "node scripts/setup-stripe.mjs"
+  },
+  "dependencies": {
+    "stripe": "^17.0.0"
+  }
+}

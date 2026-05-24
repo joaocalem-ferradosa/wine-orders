@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Obrigado · Quinta da Ferradosa</title>
+<link rel="stylesheet" href="styles.css" />
+<style>
+  html, body { margin: 0; padding: 0; min-height: 100vh; background: #f4ede0; font-family: 'Inter', system-ui, sans-serif; color: #1c1814; }
+  .wrap { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 32px; }
+  .mark { width: 56px; height: 56px; border-radius: 50%; border: 1px solid #1c1814; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 24px; font-weight: 500; font-size: 22px; }
+  h1 { font-size: 28px; font-weight: 500; letter-spacing: -0.01em; margin: 0 0 12px; }
+  p { max-width: 480px; line-height: 1.55; opacity: 0.75; margin: 4px 0; }
+  a.back { margin-top: 32px; display: inline-block; padding: 14px 28px; background: #1c1814; color: #f4ede0; text-decoration: none; font-size: 12px; letter-spacing: 0.22em; text-transform: uppercase; }
+  a.back:hover { background: #6b1a26; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="mark">✓</div>
+  <h1>Obrigado pela sua encomenda</h1>
+  <p>Recebemos o seu pagamento. Vai receber por e-mail a confirmação da Stripe e, em 24h, a factura emitida pela Quinta da Ferradosa.</p>
+  <p>Em caso de dúvidas: <a href="mailto:encomendas@ferradosa.com">encomendas@ferradosa.com</a></p>
+  <a class="back" href="/">Voltar à loja</a>
+</div>
+<script>
+  // Clear cart on successful checkout so a refresh of the shop is empty.
+  try { localStorage.removeItem('ferradosa-cart-v1'); } catch (e) {}
+</script>
+</body>
+</html>

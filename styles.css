@@ -508,6 +508,45 @@
 /* ── Position the age-gate as a fixed full-viewport overlay on the live page. */
 .age-gate { position: fixed; inset: 0; }
 
+/* ── LDW promo banner ──────────────────────────────────────────────── */
+.dir-b .promo-banner {
+  display: flex; align-items: center; justify-content: center;
+  gap: 16px;
+  padding: 12px 20px;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-align: center;
+  flex-wrap: wrap;
+}
+.dir-b .promo-banner strong {
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+.dir-b .promo-banner code {
+  display: inline-block;
+  padding: 2px 8px;
+  margin: 0 2px;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'DM Mono', monospace;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+}
+
+.dir-b .checkout-error {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  background: rgba(107, 26, 38, 0.08);
+  border: 1px solid rgba(107, 26, 38, 0.3);
+  color: var(--wine);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 /* ── Tablet ────────────────────────────────────────────────────────── */
 @media (max-width: 1024px) {
   .dir-b .nav { padding: 24px 32px; }
