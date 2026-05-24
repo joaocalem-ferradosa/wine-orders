@@ -3,13 +3,6 @@
 
 const { useState, useEffect } = React;
 
-// ── Stripe price IDs (written by scripts/setup-stripe.mjs) ────────────
-window.STRIPE_PRICES = null;
-const stripePricesReady = fetch('stripe-prices.json', { cache: 'no-store' })
-  .then((r) => (r.ok ? r.json() : null))
-  .then((j) => { window.STRIPE_PRICES = j; return j; })
-  .catch(() => null);
-
 function getPromoFromUrl() {
   try {
     const p = new URLSearchParams(window.location.search).get('code');
@@ -173,49 +166,33 @@ function Checkout({ cart, setCart, lang, setLang, onBack, promo }) {
     setError(null);
     if (cart.length === 0) return;
 
-    const prices = window.STRIPE_PRICES || (await stripePricesReady);
-    if (!prices || !prices.wines) {
+    if (!window.CHECKOUT_URL || window.CHECKOUT_URL.includes('REPLACE-ME')) {
       setError(lang === 'pt'
-        ? 'Pagamentos ainda não configurados. Tente novamente em breve.'
-        : 'Payments not yet configured. Please try again shortly.');
-      return;
-    }
-    if (!window.STRIPE_PUBLISHABLE_KEY || window.STRIPE_PUBLISHABLE_KEY.includes('REPLACE')) {
-      setError(lang === 'pt'
-        ? 'Chave Stripe em falta no site. Contacte-nos para concluir a encomenda.'
-        : 'Stripe key missing on site. Contact us to complete the order.');
-      return;
-    }
-
-    const lineItems = cart
-      .map((line) => {
-        const ref = prices.wines[line.id];
-        return ref ? { price: ref.price_id, quantity: line.qty } : null;
-      })
-      .filter(Boolean);
-
-    if (lineItems.length === 0) {
-      setError(lang === 'pt'
-        ? 'Não foi possível encontrar os preços para os vinhos no cesto.'
-        : 'Could not find Stripe prices for the wines in the cart.');
+        ? 'Checkout ainda não configurado. Tente novamente em breve.'
+        : 'Checkout not configured yet. Please try again shortly.');
       return;
     }
 
     setSubmitting(true);
     try {
-      const stripe = window.Stripe(window.STRIPE_PUBLISHABLE_KEY);
-      const { error: stripeError } = await stripe.redirectToCheckout({
-        lineItems,
-        mode: 'payment',
-        successUrl: window.STRIPE_SUCCESS_URL,
-        cancelUrl: window.STRIPE_CANCEL_URL + (promo ? '?code=' + promo : ''),
-        shippingAddressCollection: { allowedCountries: ['PT'] },
-        locale: lang === 'en' ? 'en' : 'pt',
+      const r = await fetch(window.CHECKOUT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: cart.map((l) => ({ wine_id: l.id, qty: l.qty })),
+          lang,
+          promo,
+          successUrl: window.STRIPE_SUCCESS_URL,
+          cancelUrl: window.STRIPE_CANCEL_URL + (promo ? '?code=' + promo : ''),
+        }),
       });
-      if (stripeError) {
-        setError(stripeError.message);
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok || !data.url) {
+        setError(data.error || (lang === 'pt' ? 'Erro ao iniciar pagamento.' : 'Failed to start checkout.'));
         setSubmitting(false);
+        return;
       }
+      window.location = data.url;
     } catch (e) {
       setError(e.message || String(e));
       setSubmitting(false);

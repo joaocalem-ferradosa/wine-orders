@@ -1,0 +1,6 @@
+name = "wine-orders-checkout"
+main = "src/index.js"
+compatibility_date = "2026-05-24"
+
+# STRIPE_SECRET_KEY is set as a secret, NOT in this file:
+#   wrangler secret put STRIPE_SECRET_KEY
