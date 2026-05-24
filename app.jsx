@@ -200,9 +200,15 @@ function Checkout({ cart, setCart, lang, setLang, onBack, promoActive }) {
   const [error, setError] = useState(null);
 
   // Reset submitting state when the user returns from the Stripe redirect
-  // (browser back / bfcache restore).
+  // (browser back / bfcache restore). Also blur any focused element so the
+  // checkout button doesn't stay in a "stuck" hover/focus visual.
   useEffect(() => {
-    const onShow = () => setSubmitting(false);
+    const onShow = () => {
+      setSubmitting(false);
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
+    };
     window.addEventListener('pageshow', onShow);
     return () => window.removeEventListener('pageshow', onShow);
   }, []);
@@ -223,7 +229,10 @@ function Checkout({ cart, setCart, lang, setLang, onBack, promoActive }) {
   };
   const removeLine = (id) => setCart((c) => c.filter((l) => l.id !== id));
 
-  const handlePlaceOrder = async () => {
+  const handlePlaceOrder = async (e) => {
+    if (e && e.currentTarget && typeof e.currentTarget.blur === 'function') {
+      e.currentTarget.blur();
+    }
     setError(null);
     if (cart.length === 0) return;
 

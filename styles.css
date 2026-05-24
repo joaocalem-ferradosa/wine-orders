@@ -193,19 +193,22 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
   opacity: 0.65;
-  display: flex; flex-wrap: wrap; gap: 2px 8px;
+  display: flex; flex-direction: column; gap: 2px;
 }
 .dir-b .wall .price .price-box span { white-space: nowrap; }
 .dir-b .wall button {
   background: var(--ink); color: var(--paper);
   border: 1px solid transparent;
-  padding: 12px 18px;
+  height: 42px;
+  padding: 0 18px;
   font-family: 'Inter', sans-serif;
   font-size: 11px;
   letter-spacing: 0.15em;
   text-transform: uppercase;
+  white-space: nowrap;
   cursor: pointer;
   transition: background 0.18s;
+  display: inline-flex; align-items: center; justify-content: center;
 }
 .dir-b .wall button:hover { background: var(--wine); }
 .dir-b .wall button:disabled {
@@ -220,33 +223,34 @@
   color: var(--paper);
 }
 
-/* In-card qty stepper — sized to match the Adicionar caixa button exactly. */
+/* In-card qty stepper — fixed height, matches the Adicionar caixa button. */
 .dir-b .wall .qty.card-qty {
   display: inline-flex; align-items: stretch;
   background: var(--ink);
   color: var(--paper);
   border: 1px solid transparent;
+  height: 42px;
   font-family: 'DM Mono', monospace;
   font-size: 11px;
-  line-height: 1.2;
 }
 .dir-b .wall .qty.card-qty span {
-  padding: 12px 14px;
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 0 14px;
   cursor: pointer;
   user-select: none;
   letter-spacing: 0.06em;
-  line-height: 1.2;
   transition: background 0.18s;
 }
-.dir-b .wall .qty.card-qty span:hover { background: var(--wine); }
+@media (hover: hover) and (pointer: fine) {
+  .dir-b .wall .qty.card-qty span:hover { background: var(--wine); }
+}
 .dir-b .wall .qty.card-qty .n {
-  padding: 12px 14px;
+  padding: 0 14px;
   border-left: 1px solid rgba(244,237,224,0.18);
   border-right: 1px solid rgba(244,237,224,0.18);
   cursor: default;
   font-weight: 500;
   min-width: 38px;
-  text-align: center;
 }
 .dir-b .wall .qty.card-qty .n:hover { background: transparent; }
 
@@ -270,16 +274,18 @@
 
 /* ── Checkout ──────────────────────────────────────────────────────── */
 .dir-b .co {
-  display: grid; grid-template-columns: 1fr 380px;
+  display: grid; grid-template-columns: 1fr 360px;
+  max-width: 1180px;
+  margin: 0 auto;
   min-height: calc(100vh - 95px);
 }
 .dir-b .co .left {
-  padding: 48px 56px 56px;
+  padding: 48px 48px 56px;
 }
 .dir-b .co .right {
   background: var(--paper-2);
   border-left: 1px solid var(--rule-soft);
-  padding: 48px 40px;
+  padding: 48px 36px;
   display: flex; flex-direction: column;
 }
 .dir-b .co .right-inner {
@@ -589,7 +595,11 @@
   cursor: pointer;
   transition: background 0.18s;
 }
-.dir-b .co .place:hover { background: var(--wine); }
+@media (hover: hover) and (pointer: fine) {
+  .dir-b .co .place:hover { background: var(--wine); }
+}
+.dir-b .co .place:focus { outline: none; background: var(--ink); }
+.dir-b .co .place:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 .dir-b .co .contact-note {
   margin: 16px 0 0;
   font-size: 11px;
