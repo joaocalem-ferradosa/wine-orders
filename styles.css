@@ -190,12 +190,15 @@
 .dir-b .wall .price .price-box {
   font-family: 'DM Mono', monospace;
   font-size: 11px;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   opacity: 0.65;
+  display: flex; flex-wrap: wrap; gap: 2px 8px;
 }
+.dir-b .wall .price .price-box span { white-space: nowrap; }
 .dir-b .wall button {
   background: var(--ink); color: var(--paper);
-  border: none;
+  border: 1px solid transparent;
   padding: 12px 18px;
   font-family: 'Inter', sans-serif;
   font-size: 11px;
@@ -217,24 +220,27 @@
   color: var(--paper);
 }
 
-/* In-card qty stepper — visually weighted to match the Adicionar caixa button. */
+/* In-card qty stepper — sized to match the Adicionar caixa button exactly. */
 .dir-b .wall .qty.card-qty {
   display: inline-flex; align-items: stretch;
   background: var(--ink);
   color: var(--paper);
+  border: 1px solid transparent;
   font-family: 'DM Mono', monospace;
-  font-size: 12px;
+  font-size: 11px;
+  line-height: 1.2;
 }
 .dir-b .wall .qty.card-qty span {
-  padding: 11px 14px;
+  padding: 12px 14px;
   cursor: pointer;
   user-select: none;
   letter-spacing: 0.06em;
+  line-height: 1.2;
   transition: background 0.18s;
 }
 .dir-b .wall .qty.card-qty span:hover { background: var(--wine); }
 .dir-b .wall .qty.card-qty .n {
-  padding: 11px 14px;
+  padding: 12px 14px;
   border-left: 1px solid rgba(244,237,224,0.18);
   border-right: 1px solid rgba(244,237,224,0.18);
   cursor: default;
