@@ -24,7 +24,7 @@ function LangToggle({ lang, setLang }) {
 
 function WineName({ wine }) {
   if (wine.name === 'Quinta da Ferradosa') {
-    return <>Quinta da <em>Ferradosa</em></>;
+    return <>Quinta da Ferradosa</>;
   }
   return <>{wine.name} <em>{wine.sub}</em></>;
 }
@@ -415,10 +415,17 @@ function loadCart() {
   }
 }
 
+function urlToView() {
+  try {
+    return new URLSearchParams(window.location.search).get('view') === 'checkout'
+      ? 'checkout' : 'landing';
+  } catch (e) { return 'landing'; }
+}
+
 function App() {
   const [cart, setCart] = useState(loadCart);
   const [lang, setLang] = useState('pt');
-  const [view, setView] = useState('landing');
+  const [view, setView] = useState(urlToView);
   const [promoActive] = useState(() => window.isPromoActive());
   const [adult, setAdult] = useState(() => {
     try { return !!localStorage.getItem('ferradosa-age-confirmed'); }
@@ -431,6 +438,36 @@ function App() {
       localStorage.setItem(CART_KEY, JSON.stringify(stripped));
     } catch (e) {}
   }, [cart]);
+
+  // Wire browser history so the phone/desktop back button navigates between
+  // landing and checkout within the SPA instead of leaving the site.
+  useEffect(() => {
+    if (!window.history.state || !window.history.state.view) {
+      window.history.replaceState(
+        { view },
+        '',
+        view === 'checkout' ? '?view=checkout' : window.location.pathname,
+      );
+    }
+    const onPop = () => setView(urlToView());
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
+
+  const navigateTo = (v) => {
+    if (v === view) return;
+    setView(v);
+    const url = v === 'checkout' ? '?view=checkout' : window.location.pathname;
+    window.history.pushState({ view: v }, '', url);
+  };
+
+  const goBack = () => {
+    if (window.history.state && window.history.state.view === 'checkout') {
+      window.history.back();
+    } else {
+      navigateTo('landing');
+    }
+  };
 
   const addToCart = (w) =>
     setCart((c) => {
@@ -455,7 +492,7 @@ function App() {
           setCart={setCart}
           lang={lang}
           setLang={setLang}
-          onBack={() => setView('landing')}
+          onBack={goBack}
           promoActive={promoActive}
         />
       ) : (
@@ -465,7 +502,7 @@ function App() {
           decrementCart={decrementCart}
           lang={lang}
           setLang={setLang}
-          onGoCheckout={() => setView('checkout')}
+          onGoCheckout={() => navigateTo('checkout')}
           promoActive={promoActive}
         />
       )}
