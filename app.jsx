@@ -31,21 +31,33 @@ function WineName({ wine }) {
 
 function PriceBlock({ perBottle, t }) {
   const promoActive = window.isPromoActive();
-  const boxFull = window.boxPrice(perBottle);
-  const boxNow = window.boxPrice(window.discountedPrice(perBottle));
+  const bottleFull = perBottle;
   const bottleNow = window.discountedPrice(perBottle);
+  const boxNow = window.boxPrice(bottleNow);
   return (
     <div className="price">
-      <span className="price-now">{window.fmtEUR(boxNow)}</span>
-      {promoActive && (
-        <span className="price-was">{window.fmtEUR(boxFull)}</span>
-      )}
-      <small>{window.fmtEUR(bottleNow)} {t.perBottle}</small>
+      <div className="price-bottle">
+        <span className="price-now">{window.fmtEUR(bottleNow)}</span>
+        {promoActive && (
+          <span className="price-was">{window.fmtEUR(bottleFull)}</span>
+        )}
+        <span className="price-unit">{t.perBottle}</span>
+      </div>
+      <div className="price-box">
+        {window.fmtEUR(boxNow)} · {t.caseOf6}
+      </div>
     </div>
   );
 }
 
 function WineCard({ wine, varietal, t, onAdd }) {
+  const [added, setAdded] = useState(false);
+  const handleClick = () => {
+    if (!wine.stock) return;
+    onAdd();
+    setAdded(true);
+    setTimeout(() => setAdded(false), 1000);
+  };
   return (
     <div className={'col' + (wine.stock ? '' : ' oos')}>
       <div className="ph">
@@ -54,15 +66,19 @@ function WineCard({ wine, varietal, t, onAdd }) {
       <div className="info">
         <div className="n">
           <span>{t.caseOf6}</span>
-          <span>{wine.stock ? t.inStock : t.outOfStock}</span>
+          {!wine.stock && <span>{t.outOfStock}</span>}
         </div>
         <h3><WineName wine={wine} /></h3>
-        <div className="sub">{t.vintage} {wine.year} · {varietal}</div>
+        <div className="sub">{wine.year} · {varietal}</div>
       </div>
       <div className="row">
         <PriceBlock perBottle={wine.price} t={t} />
-        <button onClick={wine.stock ? onAdd : undefined} disabled={!wine.stock}>
-          {wine.stock ? t.addCase : t.outOfStock}
+        <button
+          className={added ? 'added' : ''}
+          onClick={handleClick}
+          disabled={!wine.stock}
+        >
+          {!wine.stock ? t.outOfStock : added ? t.addedToCart : t.addCase}
         </button>
       </div>
     </div>
@@ -72,6 +88,7 @@ function WineCard({ wine, varietal, t, onAdd }) {
 function PromoBanner({ lang }) {
   const isPt = lang === 'pt';
   const pct = window.LDW_PROMO.percentOff;
+  const t = window.STRINGS[lang];
   return (
     <div className="promo-banner">
       <strong>LDW PROMO · −{pct}%</strong>
@@ -80,6 +97,7 @@ function PromoBanner({ lang }) {
           ? 'Desconto aplicado automaticamente · válido até 14 Jun 2026'
           : `${pct}% off — applied automatically · valid until 14 Jun 2026`}
       </span>
+      <span className="promo-shipping">✓ {t.freeShipping}</span>
     </div>
   );
 }
@@ -88,6 +106,17 @@ function Landing({ cart, addToCart, lang, setLang, onGoCheckout, promoActive }) 
   const t = window.STRINGS[lang];
   const copy = window.WINE_COPY[lang];
   const count = cart.reduce((n, l) => n + l.qty, 0);
+  const [bump, setBump] = useState(false);
+  const prevCount = React.useRef(count);
+  useEffect(() => {
+    if (count > prevCount.current) {
+      setBump(true);
+      const id = setTimeout(() => setBump(false), 450);
+      prevCount.current = count;
+      return () => clearTimeout(id);
+    }
+    prevCount.current = count;
+  }, [count]);
   return (
     <div className="dir-b" data-screen-label="Landing">
       {promoActive && <PromoBanner lang={lang} />}
@@ -99,7 +128,7 @@ function Landing({ cart, addToCart, lang, setLang, onGoCheckout, promoActive }) 
         <div className="nav-right">
           <LangToggle lang={lang} setLang={setLang} />
           <button className="cart-link" onClick={onGoCheckout}>
-            {t.cart} <span className="pill">{count}</span>
+            {t.cart} <span className={'pill' + (bump ? ' bumped' : '')}>{count}</span>
           </button>
         </div>
       </header>
@@ -127,20 +156,30 @@ function Landing({ cart, addToCart, lang, setLang, onGoCheckout, promoActive }) 
   );
 }
 
-function CartLine({ line, t, setQty, promoActive }) {
+function CartLine({ line, t, setQty, onRemove, promoActive }) {
+  const bottleNow = window.discountedPrice(line.price);
+  const boxNow = window.boxPrice(bottleNow);
   const lineFull = line.qty * window.boxPrice(line.price);
-  const lineNow = line.qty * window.boxPrice(window.discountedPrice(line.price));
+  const lineNow = line.qty * boxNow;
   return (
     <div className="line">
       <div className="ph"><img src={line.img} alt="" /></div>
-      <div>
+      <div className="line-info">
         <div className="nm"><WineName wine={line} /></div>
         <div className="m">{line.year} · {t.caseOf6}</div>
+        <div className="m-prices">
+          {window.fmtEUR(bottleNow)} {t.perBottleAbbrev} · {window.fmtEUR(boxNow)} {t.perCaseAbbrev}
+        </div>
+      </div>
+      <div className="line-qty">
         <div className="qty">
           <span onClick={() => setQty(line.id, line.qty - 1)}>−</span>
           <span className="n">{line.qty}</span>
           <span onClick={() => setQty(line.id, line.qty + 1)}>+</span>
         </div>
+        <button className="line-remove" onClick={() => onRemove(line.id)}>
+          {t.remove}
+        </button>
       </div>
       <div className="lp">
         <span className="lp-now">{window.fmtEUR(lineNow)}</span>
@@ -164,14 +203,14 @@ function Checkout({ cart, setCart, lang, setLang, onBack, promoActive }) {
   );
   const discount = subtotalFull - subtotalNow;
   const total = subtotalNow;
+  const totalCases = cart.reduce((n, l) => n + l.qty, 0);
+  const totalBottles = totalCases * window.BOTTLES_PER_BOX;
 
   const setQty = (id, q) => {
-    if (q <= 0) {
-      setCart((c) => c.filter((l) => l.id !== id));
-    } else {
-      setCart((c) => c.map((l) => (l.id === id ? { ...l, qty: q } : l)));
-    }
+    const clamped = Math.max(1, Math.min(99, q));
+    setCart((c) => c.map((l) => (l.id === id ? { ...l, qty: clamped } : l)));
   };
+  const removeLine = (id) => setCart((c) => c.filter((l) => l.id !== id));
 
   const handlePlaceOrder = async () => {
     setError(null);
@@ -213,7 +252,10 @@ function Checkout({ cart, setCart, lang, setLang, onBack, promoActive }) {
     <div className="dir-b" data-screen-label="Checkout">
       {promoActive && <PromoBanner lang={lang} />}
       <header className="nav">
-        <button className="back-link" onClick={onBack}>{t.backToShop}</button>
+        <button className="back-link" onClick={onBack} aria-label={t.backToShop}>
+          <span className="back-arrow">←</span>
+          <span className="back-text">{t.backToShop.replace(/^←\s*/, '')}</span>
+        </button>
         <div className="logomark center-logomark">
           FERRADOSA
           <small>DOURO</small>
@@ -221,45 +263,63 @@ function Checkout({ cart, setCart, lang, setLang, onBack, promoActive }) {
         <LangToggle lang={lang} setLang={setLang} />
       </header>
 
-      <div className="co">
-        <div className="left">
-          <h2>{t.checkout}</h2>
-          <p className="checkout-note">{t.checkoutNote}</p>
+      {cart.length === 0 ? (
+        <div className="empty-cart">
+          <div className="empty-cart-mark">∅</div>
+          <h2>{t.emptyCart}</h2>
+          <p>{t.emptyCartLead}</p>
+          <button className="empty-cart-cta" onClick={onBack}>{t.emptyCartCta}</button>
         </div>
+      ) : (
+        <div className="co">
+          <section className="left">
+            <header className="order-head">
+              <h2>{t.yourOrder}</h2>
+              <span className="order-count">
+                {totalCases} {totalCases === 1 ? t.case_one : t.cases} · {totalBottles} {t.bottles}
+              </span>
+            </header>
+            <div className="lines">
+              {cart.map((l) => (
+                <CartLine
+                  key={l.id}
+                  line={l}
+                  t={t}
+                  setQty={setQty}
+                  onRemove={removeLine}
+                  promoActive={promoActive}
+                />
+              ))}
+            </div>
+          </section>
 
-        <aside className="right">
-          <h3>{t.summary}</h3>
-          {cart.length === 0 && (
-            <p style={{ opacity: 0.6, fontSize: 13, margin: '12px 0 0' }}>{t.emptyCart}</p>
-          )}
-          {cart.map((l) => (
-            <CartLine key={l.id} line={l} t={t} setQty={setQty} promoActive={promoActive} />
-          ))}
-          <div className="totals">
-            {promoActive && discount > 0 ? (
-              <>
-                <div className="r"><span>{t.subtotal}</span><span>{window.fmtEUR(subtotalFull)}</span></div>
-                <div className="r discount"><span>{t.discount}</span><span>−{window.fmtEUR(discount)}</span></div>
-              </>
-            ) : (
-              <div className="r"><span>{t.subtotal}</span><span>{window.fmtEUR(subtotalNow)}</span></div>
-            )}
-            <div className="r small"><span>{t.taxIncl}</span><span>—</span></div>
-            <div className="r tot"><span>{t.total}</span><span>{window.fmtEUR(total)}</span></div>
-          </div>
-          <button
-            className="place"
-            onClick={handlePlaceOrder}
-            disabled={cart.length === 0 || submitting}
-          >
-            {submitting
-              ? (lang === 'pt' ? 'A redireccionar…' : 'Redirecting…')
-              : t.placeOrder}
-          </button>
-          {error && <p className="checkout-error">{error}</p>}
-          <p className="contact-note">{t.contactNote}</p>
-        </aside>
-      </div>
+          <aside className="right">
+            <div className="right-inner">
+              {promoActive && discount > 0 && (
+                <div className="totals-pre">
+                  <div className="r"><span>{t.subtotal}</span><span>{window.fmtEUR(subtotalFull)}</span></div>
+                  <div className="r discount"><span>{t.discount}</span><span>−{window.fmtEUR(discount)}</span></div>
+                </div>
+              )}
+              <div className="total-label">{t.total}</div>
+              <div className="total-amount">{window.fmtEUR(total)}</div>
+              <div className="total-vat">{t.taxIncl}</div>
+              <div className="shipping-note">✓ {t.freeShipping}</div>
+              <button
+                className="place"
+                onClick={handlePlaceOrder}
+                disabled={submitting}
+              >
+                {submitting
+                  ? (lang === 'pt' ? 'A redireccionar…' : 'Redirecting…')
+                  : t.payNow}
+              </button>
+              {error && <p className="checkout-error">{error}</p>}
+              <p className="secure-note">{t.secureNote}</p>
+            </div>
+          </aside>
+        </div>
+      )}
     </div>
   );
 }
