@@ -165,13 +165,23 @@
   font-weight: 500;
   font-size: 17px;
   letter-spacing: -0.005em;
+  display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px;
+}
+.dir-b .wall .price .price-now { color: var(--ink); }
+.dir-b .wall .price .price-was {
+  font-weight: 400;
+  font-size: 13px;
+  text-decoration: line-through;
+  opacity: 0.5;
 }
 .dir-b .wall .price small {
+  width: 100%;
   font-family: 'DM Mono', monospace;
   font-size: 10px;
   letter-spacing: 0.15em;
   opacity: 0.55;
-  margin-left: 6px;
+  margin-left: 0;
+  margin-top: 2px;
 }
 .dir-b .wall button {
   background: var(--ink); color: var(--paper);
@@ -352,6 +362,14 @@
   font-weight: 500;
   font-size: 14px;
   text-align: right;
+  display: flex; flex-direction: column; align-items: flex-end;
+}
+.dir-b .co .line .lp .lp-was {
+  font-weight: 400;
+  font-size: 11px;
+  text-decoration: line-through;
+  opacity: 0.5;
+  margin-top: 2px;
 }
 .dir-b .co .totals {
   margin-top: 22px;
@@ -362,6 +380,9 @@
   padding: 8px 0;
 }
 .dir-b .co .totals .r.small { font-size: 11px; opacity: 0.6; }
+.dir-b .co .totals .r.discount {
+  color: var(--wine);
+}
 .dir-b .co .totals .r.tot {
   border-top: 1px solid var(--rule);
   margin-top: 10px; padding-top: 16px;
@@ -390,6 +411,13 @@
   line-height: 1.55;
   opacity: 0.65;
   text-align: center;
+}
+.dir-b .co .checkout-note {
+  margin: 24px 0 0;
+  max-width: 480px;
+  font-size: 14px;
+  line-height: 1.6;
+  opacity: 0.75;
 }
 
 /* ── Age Gate (modal, persisted via localStorage) ──────────────────── */

@@ -105,7 +105,7 @@ async function handleCheckout(request, env) {
     return json({ error: 'invalid json' }, 400, origin);
   }
 
-  const { items, lang, promo, successUrl, cancelUrl } = payload || {};
+  const { items, lang, successUrl, cancelUrl } = payload || {};
   if (!Array.isArray(items) || items.length === 0) {
     return json({ error: 'no items' }, 400, origin);
   }
@@ -137,17 +137,18 @@ async function handleCheckout(request, env) {
     billing_address_collection: 'required',
     shipping_address_collection: { allowed_countries: ['PT'] },
     phone_number_collection: { enabled: true },
+    // Optional Portuguese NIF / EU VAT ID, used for the TOConline invoice.
+    tax_id_collection: { enabled: true },
   };
 
   if (prices.shipping && prices.shipping.shipping_rate_id) {
     sessionBody.shipping_options = [{ shipping_rate: prices.shipping.shipping_rate_id }];
   }
 
-  // LDW promo: auto-apply via discount when ?code=LDW is on the URL and
-  // we're still within the window. Otherwise, allow manual promo entry.
+  // LDW promo: always auto-apply within the campaign window.
+  // After the deadline, fall back to manual promo entry.
   const now = Date.now();
   if (
-    promo === 'LDW' &&
     now <= LDW_DEADLINE_MS &&
     prices.promotion &&
     prices.promotion.coupon_id
