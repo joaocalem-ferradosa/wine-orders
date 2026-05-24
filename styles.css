@@ -236,6 +236,7 @@
 .dir-b .wall .qty.card-qty span {
   display: inline-flex; align-items: center; justify-content: center;
   padding: 0 14px;
+  line-height: 1;
   cursor: pointer;
   user-select: none;
   letter-spacing: 0.06em;
@@ -245,14 +246,14 @@
   .dir-b .wall .qty.card-qty span:hover { background: var(--wine); }
 }
 .dir-b .wall .qty.card-qty .n {
+  background: var(--paper);
+  color: var(--ink);
   padding: 0 14px;
-  border-left: 1px solid rgba(244,237,224,0.18);
-  border-right: 1px solid rgba(244,237,224,0.18);
   cursor: default;
   font-weight: 500;
   min-width: 38px;
 }
-.dir-b .wall .qty.card-qty .n:hover { background: transparent; }
+.dir-b .wall .qty.card-qty .n:hover { background: var(--paper); }
 
 @keyframes pill-bump {
   0%   { transform: scale(1); }
