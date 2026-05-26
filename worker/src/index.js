@@ -95,6 +95,85 @@ async function createStripeSession(secretKey, body) {
   return r.json();
 }
 
+// ── Stripe webhook signature verification (Web Crypto, no SDK) ────────
+async function verifyStripeSignature(payload, header, secret) {
+  if (!header) return false;
+  const parts = Object.fromEntries(
+    header.split(',').map((p) => {
+      const i = p.indexOf('=');
+      return [p.slice(0, i).trim(), p.slice(i + 1).trim()];
+    })
+  );
+  const t = parts.t;
+  const v1 = parts.v1;
+  if (!t || !v1) return false;
+
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw',
+    enc.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+  const sigBuf = await crypto.subtle.sign('HMAC', key, enc.encode(`${t}.${payload}`));
+  const expected = Array.from(new Uint8Array(sigBuf))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+
+  if (expected.length !== v1.length) return false;
+  let diff = 0;
+  for (let i = 0; i < expected.length; i++) {
+    diff |= expected.charCodeAt(i) ^ v1.charCodeAt(i);
+  }
+  return diff === 0;
+}
+
+async function attachTaxIdToCustomer(secretKey, customerId, tax) {
+  if (!customerId || !tax || !tax.type || !tax.value) return;
+  const r = await fetch(
+    `https://api.stripe.com/v1/customers/${customerId}/tax_ids`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${secretKey}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({ type: tax.type, value: tax.value }).toString(),
+    }
+  );
+  // Duplicates return 400 — that's fine, ignore.
+  if (!r.ok) {
+    const body = await r.text().catch(() => '');
+    console.warn(`tax_id attach failed (${r.status}): ${body}`);
+  }
+}
+
+async function handleWebhook(request, env) {
+  if (!env.STRIPE_WEBHOOK_SECRET) {
+    return new Response('webhook secret not configured', { status: 500 });
+  }
+  const sigHeader = request.headers.get('Stripe-Signature');
+  const body = await request.text();
+
+  const ok = await verifyStripeSignature(body, sigHeader, env.STRIPE_WEBHOOK_SECRET);
+  if (!ok) return new Response('invalid signature', { status: 400 });
+
+  let event;
+  try { event = JSON.parse(body); }
+  catch (e) { return new Response('invalid json', { status: 400 }); }
+
+  if (event.type === 'checkout.session.completed') {
+    const session = event.data && event.data.object;
+    const customerId = session && session.customer;
+    const taxIds = (session && session.customer_details && session.customer_details.tax_ids) || [];
+    for (const tx of taxIds) {
+      await attachTaxIdToCustomer(env.STRIPE_SECRET_KEY, customerId, tx);
+    }
+  }
+  return new Response('ok', { status: 200 });
+}
+
 async function handleCheckout(request, env) {
   const origin = request.headers.get('Origin') || '';
 
@@ -134,6 +213,9 @@ async function handleCheckout(request, env) {
     success_url: successUrl || 'https://orders.ferradosa.com/success.html',
     cancel_url: cancelUrl || 'https://orders.ferradosa.com/',
     locale: lang === 'en' ? 'en' : 'pt',
+    // Always materialise a Customer record so tax IDs, billing address and
+    // shipping address are visible on the Customers tab.
+    customer_creation: 'always',
     billing_address_collection: 'required',
     shipping_address_collection: { allowed_countries: ['PT'] },
     phone_number_collection: { enabled: true },
@@ -176,8 +258,11 @@ export default {
     if (url.pathname === '/checkout' && request.method === 'POST') {
       return handleCheckout(request, env);
     }
+    if (url.pathname === '/webhook' && request.method === 'POST') {
+      return handleWebhook(request, env);
+    }
     if (url.pathname === '/' && request.method === 'GET') {
-      return new Response('wine-orders checkout worker — POST /checkout', {
+      return new Response('wine-orders checkout worker — POST /checkout, POST /webhook', {
         status: 200,
         headers: { 'Content-Type': 'text/plain', ...corsHeaders(origin) },
       });
