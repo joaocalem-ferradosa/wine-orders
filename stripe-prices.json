@@ -4,14 +4,14 @@
   "wines": {
     "branco": {
       "wine_id": "branco",
-      "product_id": "prod_UZqwcmkN9lWP8M",
-      "price_id": "price_1TahEjV052YnjDnXDhVYf7UX",
+      "product_id": "prod_UZlL4jShhNPlaH",
+      "price_id": "price_1TabovV056qwZ0N8xvPfCXA6",
       "box_price_cents": 10470
     },
     "rose": {
       "wine_id": "rose",
-      "product_id": "prod_UZqwXqPfND7J77",
-      "price_id": "price_1TahEkV052YnjDnXFKJ83JKu",
+      "product_id": "prod_UZlML7dzqaZl5m",
+      "price_id": "price_1TabqAV056qwZ0N8iejjN3R4",
       "box_price_cents": 6270
     },
     "quinta": {
@@ -22,17 +22,17 @@
     },
     "tinto": {
       "wine_id": "tinto",
-      "product_id": "prod_UZqwYxwfe6cjac",
-      "price_id": "price_1TahEnV052YnjDnXdUhD2ccR",
+      "product_id": "prod_UZlNgzFyKNildO",
+      "price_id": "price_1TabqxV056qwZ0N8okvbF07O",
       "box_price_cents": 16170
     }
   },
   "promotion": {
-    "coupon_id": "7MOgl4wx",
-    "promotion_code_id": "promo_1TahEoV052YnjDnXVk0q5vXy",
+    "coupon_id": "zIkpcGJN",
+    "promotion_code_id": "promo_1TbOzRV056qwZ0N8DqxPLrD7",
     "code": "LDW"
   },
   "shipping": {
-    "shipping_rate_id": "shr_1TahEoV052YnjDnXqjKg2AFq"
+    "shipping_rate_id": "shr_1TabtyV056qwZ0N8cHIGmpxr"
   }
 }

@@ -10,7 +10,7 @@
 
 window.CHECKOUT_URL = 'https://wine-orders-checkout.ferradosa.workers.dev/checkout';
 
-window.STRIPE_PUBLISHABLE_KEY = 'pk_test_51TacDeV052YnjDnXXJabEzLQdjd9HI6KznKHMF2UpgZfRJDB66Wo5m4ZZQ8AGAHTijox9G5moR5tnvZMihGd6ua100kiNaRTz4';
+window.STRIPE_PUBLISHABLE_KEY = 'pk_live_51Tab21V056qwZ0N8FiSozVrLaYLFgPO4J7LlmVZw8xBrONS511e3Ds1ivF9beKwYHeUaMpggSRXaFKCdZAIrY7TZ00dafvKcW8';
 
 // Where to send the customer after Stripe Checkout completes / is cancelled.
 window.STRIPE_SUCCESS_URL = window.location.origin + '/success.html';
