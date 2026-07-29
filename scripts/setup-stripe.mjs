@@ -47,10 +47,10 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 // ── Catalog ────────────────────────────────────────────────────────────
 const BOTTLES_PER_BOX = 6;
 const WINES = [
-  { id: 'branco', name: 'Ferradosa Branco 2022 — Caixa de 6', perBottle: 17.45, stock: true },
-  { id: 'rose',   name: 'Ferradosa Rosé 2024 — Caixa de 6',   perBottle: 10.45, stock: true },
-  { id: 'quinta', name: 'Quinta da Ferradosa 2021 — Caixa de 6', perBottle: 17.95, stock: false },
-  { id: 'tinto',  name: 'Ferradosa Tinto 2019 — Caixa de 6',  perBottle: 26.95, stock: true },
+  { id: 'branco', name: 'Ferradosa Branco',        perBottle: 17.45, stock: true },
+  { id: 'rose',   name: 'Ferradosa Rosé',          perBottle: 10.45, stock: true },
+  { id: 'quinta', name: 'Quinta da Ferradosa Tinto', perBottle: 17.95, stock: true },
+  { id: 'tinto',  name: 'Ferradosa Tinto',         perBottle: 26.95, stock: true },
 ];
 
 const PROMO = {

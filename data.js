@@ -25,7 +25,7 @@ window.WINES = [
     year: '2021',
     img: 'assets/wines/quinta-da-ferradosa.png',
     price: 17.95,
-    stock: false,
+    stock: true,
   },
   {
     id: 'tinto',

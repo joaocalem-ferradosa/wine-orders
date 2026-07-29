@@ -1,5 +1,5 @@
 {
-  "mode": "TEST",
+  "mode": "LIVE",
   "generated_at": "2026-05-24T18:59:02.941Z",
   "wines": {
     "branco": {
@@ -16,8 +16,8 @@
     },
     "quinta": {
       "wine_id": "quinta",
-      "product_id": "prod_UZqwxtLs74IvFY",
-      "price_id": "price_1TahEmV052YnjDnXOUwQfeXa",
+      "product_id": "prod_UyPRZsTTgHjRPK",
+      "price_id": "price_1TyScmV056qwZ0N8uVqGfqfI",
       "box_price_cents": 10770
     },
     "tinto": {
