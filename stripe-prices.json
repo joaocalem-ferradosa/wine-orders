@@ -1,38 +1,45 @@
 {
   "mode": "LIVE",
-  "generated_at": "2026-05-24T18:59:02.941Z",
+  "generated_at": "2026-11-09T15:37:20.032Z",
   "wines": {
-    "branco": {
-      "wine_id": "branco",
-      "product_id": "prod_UZlL4jShhNPlaH",
-      "price_id": "price_1TabovV056qwZ0N8xvPfCXA6",
-      "box_price_cents": 10470
+    "ferro-branco": {
+      "wine_id": "ferro-branco",
+      "product_id": "prod_Vb6qm3BaozBnNL",
+      "price_id": "price_1UZudCV056qwZ0N8QTZ5AWZN",
+      "box_price_cents": 2670
+    },
+    "ferro-tinto": {
+      "wine_id": "ferro-tinto",
+      "product_id": "prod_Vb6qOD86zqOUYh",
+      "price_id": "price_1UZudDV056qwZ0N8AAahsAcH",
+      "box_price_cents": 2670
     },
     "rose": {
       "wine_id": "rose",
-      "product_id": "prod_UZlML7dzqaZl5m",
-      "price_id": "price_1TbP4HV056qwZ0N860KQFdhx",
+      "product_id": "prod_Vb6qPe9pANzly1",
+      "price_id": "price_1UZudEV056qwZ0N8KnTL4fRW",
       "box_price_cents": 6270
+    },
+    "branco": {
+      "wine_id": "branco",
+      "product_id": "prod_Vb6qgKZDTq9OrI",
+      "price_id": "price_1UZudFV056qwZ0N8RD3VQTGp",
+      "box_price_cents": 9570
     },
     "quinta": {
       "wine_id": "quinta",
-      "product_id": "prod_UyPRZsTTgHjRPK",
-      "price_id": "price_1TyScmV056qwZ0N8uVqGfqfI",
+      "product_id": "prod_Vb6qvcCQJGKBZz",
+      "price_id": "price_1UZudGV056qwZ0N8ZZcFJA2m",
       "box_price_cents": 10770
     },
     "tinto": {
       "wine_id": "tinto",
-      "product_id": "prod_UZlNgzFyKNildO",
-      "price_id": "price_1TabqxV056qwZ0N8okvbF07O",
-      "box_price_cents": 16170
+      "product_id": "prod_Vb6qqANXUiuXj6",
+      "price_id": "price_1UZudHV056qwZ0N8Q7pwKbQ9",
+      "box_price_cents": 13770
     }
   },
-  "promotion": {
-    "coupon_id": "zIkpcGJN",
-    "promotion_code_id": "promo_1TbOzRV056qwZ0N8DqxPLrD7",
-    "code": "LDW"
-  },
   "shipping": {
-    "shipping_rate_id": "shr_1TabtyV056qwZ0N8cHIGmpxr"
+    "shipping_rate_id": "shr_1UZudHV056qwZ0N8kvcMQcZe"
   }
 }
