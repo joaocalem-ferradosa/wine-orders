@@ -44,6 +44,7 @@ function PriceBlock({ perBottle, pct, t }) {
       <div className="price-box">
         <span className="price-box-eq">× {window.BOTTLES_PER_BOX} {t.bottles}</span>
         <span className="price-box-result">= {fmtCents(boxNow)} / {t.caseOf6}</span>
+        <span className="price-box-vat">{t.taxIncl}</span>
       </div>
     </div>
   );
