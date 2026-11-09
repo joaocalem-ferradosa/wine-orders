@@ -111,12 +111,16 @@ window.STRINGS = {
 
 window.WINE_COPY = {
   pt: {
+    'ferro-branco': { varietal: 'Branco' },
+    'ferro-tinto': { varietal: 'Tinto' },
     branco: { varietal: 'Branco' },
     rose: { varietal: 'Rosé' },
     quinta: { varietal: 'Tinto' },
     tinto: { varietal: 'Tinto' },
   },
   en: {
+    'ferro-branco': { varietal: 'White' },
+    'ferro-tinto': { varietal: 'Red' },
     branco: { varietal: 'White' },
     rose: { varietal: 'Rosé' },
     quinta: { varietal: 'Red' },

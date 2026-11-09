@@ -63,7 +63,7 @@ function WineCard({ wine, varietal, t, cartQty, onAdd, onDec }) {
           {!wine.stock && <span>{t.outOfStock}</span>}
         </div>
         <h3><WineName wine={wine} /></h3>
-        <div className="sub">{wine.year} · {varietal}</div>
+        <div className="sub">{wine.year && `${wine.year} · `}{varietal}</div>
       </div>
       <div className="row">
         <PriceBlock perBottle={wine.price} t={t} />
@@ -169,7 +169,7 @@ function CartLine({ line, t, setQty, onRemove, promoActive }) {
       <div className="ph"><img src={line.img} alt="" /></div>
       <div className="line-info">
         <div className="nm"><WineName wine={line} /></div>
-        <div className="m">{line.year} · {t.caseOf6}</div>
+        <div className="m">{line.year && `${line.year} · `}{t.caseOf6}</div>
         <div className="m-prices">
           {window.fmtEUR(bottleNow)} {t.perBottleAbbrev} · {window.fmtEUR(boxNow)} {t.perCaseAbbrev}
         </div>
