@@ -1,12 +1,11 @@
 // Idempotent Stripe setup for orders.ferradosa.com.
 //
 // Creates (or updates):
-//   - one Product per wine, one Price per box (6 bottles)
-//   - the LDW promo coupon (30% off, expires 2026-06-14) + promotion code
+//   - one Product per wine in ../data.js, one Price per box (6 bottles)
 //   - a free shipping rate for mainland Portugal
 //
-// Writes the resulting public IDs to ../stripe-prices.json so the static
-// page can reference them.
+// Writes the resulting public IDs to ../stripe-prices.json (live key) or
+// ../stripe-prices.test.json (test key).
 //
 // Usage:
 //   cp .env.example .env  # then paste your sk_test_... or sk_live_...
@@ -16,6 +15,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
+import vm from 'node:vm';
 import Stripe from 'stripe';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -44,22 +44,19 @@ if (!process.env.STRIPE_SECRET_KEY) {
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-// ── Catalog ────────────────────────────────────────────────────────────
+// ── Catalog (single source: data.js) ───────────────────────────────────
 const BOTTLES_PER_BOX = 6;
-const WINES = [
-  { id: 'branco', name: 'Ferradosa Branco',        perBottle: 17.45, stock: true },
-  { id: 'rose',   name: 'Ferradosa Rosé',          perBottle: 10.45, stock: true },
-  { id: 'quinta', name: 'Quinta da Ferradosa Tinto', perBottle: 17.95, stock: true },
-  { id: 'tinto',  name: 'Ferradosa Tinto',         perBottle: 26.95, stock: true },
-];
-
-const PROMO = {
-  code: 'LDW',
-  name: 'Lisbon Design Week 2026',
-  percentOff: 30,
-  // 2026-06-14 23:59 Europe/Lisbon. Stripe wants a Unix timestamp (seconds, UTC).
-  redeemBy: Math.floor(new Date('2026-06-14T22:59:59Z').getTime() / 1000),
-};
+function loadCatalog() {
+  const ctx = { window: {} };
+  vm.runInNewContext(readFileSync(resolve(repoRoot, 'data.js'), 'utf8'), ctx);
+  return ctx.window.WINES.map((w) => ({
+    id: w.id,
+    name: w.name === 'Quinta da Ferradosa' ? 'Quinta da Ferradosa Tinto' : `${w.name} ${w.sub}`,
+    perBottle: w.price,
+    stock: w.stock,
+  }));
+}
+const WINES = loadCatalog();
 
 const SHIPPING_RATE = {
   display_name: 'Envio grátis — Portugal Continental',
@@ -136,45 +133,6 @@ async function upsertWine(w) {
   return { wine_id: w.id, product_id: product.id, price_id: price.id, box_price_cents: boxCents };
 }
 
-async function upsertPromo() {
-  const couponsIter = stripe.coupons.list({ limit: 100 });
-  const existingCoupon = await findByMetadata(couponsIter, 'promo_key', PROMO.code);
-
-  let coupon;
-  if (existingCoupon) {
-    coupon = existingCoupon;
-    console.log(`  Coupon LDW: reused (${coupon.id})`);
-  } else {
-    coupon = await stripe.coupons.create({
-      name: PROMO.name,
-      percent_off: PROMO.percentOff,
-      duration: 'once',
-      redeem_by: PROMO.redeemBy,
-      metadata: { promo_key: PROMO.code },
-    });
-    console.log(`  Coupon LDW: created (${coupon.id})`);
-  }
-
-  const promosIter = stripe.promotionCodes.list({ code: PROMO.code, limit: 10 });
-  let promoCode = null;
-  for await (const pc of promosIter) {
-    if (pc.code === PROMO.code) { promoCode = pc; break; }
-  }
-  if (!promoCode) {
-    promoCode = await stripe.promotionCodes.create({
-      coupon: coupon.id,
-      code: PROMO.code,
-      expires_at: PROMO.redeemBy,
-      metadata: { promo_key: PROMO.code },
-    });
-    console.log(`  PromotionCode LDW: created (${promoCode.id})`);
-  } else {
-    console.log(`  PromotionCode LDW: reused (${promoCode.id})`);
-  }
-
-  return { coupon_id: coupon.id, promotion_code_id: promoCode.id, code: PROMO.code };
-}
-
 async function upsertShippingRate() {
   const ratesIter = stripe.shippingRates.list({ active: true, limit: 100 });
   const existing = await findByMetadata(ratesIter, 'rate_key', 'pt-mainland-free');
@@ -203,8 +161,6 @@ async function main() {
     wines[w.id] = out;
   }
 
-  console.log('\nPromotion:');
-  const promo = await upsertPromo();
 
   console.log('\nShipping:');
   const shipping = await upsertShippingRate();
@@ -213,15 +169,13 @@ async function main() {
     mode,
     generated_at: new Date().toISOString(),
     wines,
-    promotion: promo,
     shipping,
   };
 
-  const outPath = resolve(repoRoot, 'stripe-prices.json');
+  const outPath = resolve(repoRoot, mode === 'LIVE' ? 'stripe-prices.json' : 'stripe-prices.test.json');
   writeFileSync(outPath, JSON.stringify(out, null, 2) + '\n');
   console.log(`\nWrote ${outPath}`);
-  console.log('\nNext: paste your publishable key (pk_...) into stripe-config.js,');
-  console.log('commit stripe-prices.json + stripe-config.js, and push.');
+  console.log(mode === 'LIVE' ? 'Next: commit stripe-prices.json and push.' : '(test mode: file is gitignored, used by local wrangler dev)');
 }
 
 main().catch((e) => {
