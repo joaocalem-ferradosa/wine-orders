@@ -36,7 +36,7 @@ window.STRINGS = {
     promoDiscount: (code, min) => `Desconto ${code} (${min}+ caixas)`,
     promoUpTo: 'até',
     promoBannerText: 'A partir de 2 caixas, misture os vinhos que quiser · válido até 31 Dez 2026',
-    promoTiersHead: (code) => `Com ${code}, por garrafa`,
+    promoTiersHead: () => 'Desconto por quantidade',
     promoNudge: (n, eur, hasDiscount) =>
       `Adicione mais ${n} ${n === 1 ? 'caixa' : 'caixas'} e ${hasDiscount ? 'o desconto sobe para' : 'poupe'} pelo menos ${eur}`,
     haveCode: 'Tem um código?',
@@ -101,7 +101,7 @@ window.STRINGS = {
     promoDiscount: (code, min) => `${code} discount (${min}+ cases)`,
     promoUpTo: 'up to',
     promoBannerText: 'From 2 cases, mix any wines · valid until 31 Dec 2026',
-    promoTiersHead: (code) => `With ${code}, per bottle`,
+    promoTiersHead: () => 'Volume discount',
     promoNudge: (n, eur, hasDiscount) =>
       `Add ${n} more ${n === 1 ? 'case' : 'cases'} and ${hasDiscount ? 'your discount rises to' : 'save'} at least ${eur}`,
     haveCode: 'Have a code?',
