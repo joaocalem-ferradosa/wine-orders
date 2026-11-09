@@ -151,7 +151,7 @@ async function upsertShippingRate() {
 // ── Run ────────────────────────────────────────────────────────────────
 async function main() {
   const acct = await stripe.accounts.retrieve().catch(() => null);
-  const mode = process.env.STRIPE_SECRET_KEY.startsWith('sk_live_') ? 'LIVE' : 'TEST';
+  const mode = /^(sk|rk)_live_/.test(process.env.STRIPE_SECRET_KEY) ? 'LIVE' : 'TEST';
   console.log(`Stripe mode: ${mode}${acct ? ` (account ${acct.id})` : ''}\n`);
 
   console.log('Wines:');
