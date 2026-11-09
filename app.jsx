@@ -1,6 +1,5 @@
 // Ferradosa — orders.ferradosa.com
 // Single-page React app: landing (bottle wall) + checkout. Box-of-6 only.
-// 30% LDW promo is always-on until 14 Jun 2026 (see data.js).
 
 const { useState, useEffect } = React;
 
@@ -29,29 +28,42 @@ function WineName({ wine }) {
   return <>{wine.name} <em>{wine.sub}</em></>;
 }
 
+const fmtCents = (c) => window.fmtEUR(c / 100);
+
 function PriceBlock({ perBottle, t }) {
-  const promoActive = window.isPromoActive();
-  const bottleFull = perBottle;
-  const bottleNow = window.discountedPrice(perBottle);
-  const boxNow = window.boxPrice(bottleNow);
   return (
     <div className="price">
       <div className="price-bottle">
-        <span className="price-now">{window.fmtEUR(bottleNow)}</span>
-        {promoActive && (
-          <span className="price-was">{window.fmtEUR(bottleFull)}</span>
-        )}
+        <span className="price-now">{window.fmtEUR(perBottle)}</span>
         <span className="price-unit">{t.perBottle}</span>
       </div>
       <div className="price-box">
         <span className="price-box-eq">× {window.BOTTLES_PER_BOX} {t.bottles}</span>
-        <span className="price-box-result">= {window.fmtEUR(boxNow)} / {t.caseOf6}</span>
+        <span className="price-box-result">= {window.fmtEUR(window.boxPrice(perBottle))} / {t.caseOf6}</span>
       </div>
     </div>
   );
 }
 
-function WineCard({ wine, varietal, t, cartQty, onAdd, onDec }) {
+function PromoTiers({ wine, promo, tier, t }) {
+  const pcts = promo.percentOff[wine.id];
+  if (!pcts) return null;
+  const box = window.boxCents(wine.price);
+  return (
+    <div className="promo-tiers">
+      <div className="promo-tiers-head">{t.promoTiersHead(promo.code)}</div>
+      {promo.tiers.map((min, i) => (
+        <div key={min} className={'tier' + (i === tier ? ' on' : '')}>
+          <span className="tier-min">{min}+ {t.cases}</span>
+          <span className="tier-price">{fmtCents(window.discountedBottleCents(box, pcts[i]))}</span>
+          <span className="tier-pct">−{pcts[i]}%</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function WineCard({ wine, varietal, t, cartQty, onAdd, onDec, promo, tier }) {
   return (
     <div className={'col' + (wine.stock ? '' : ' oos')}>
       <div className="ph">
@@ -64,6 +76,7 @@ function WineCard({ wine, varietal, t, cartQty, onAdd, onDec }) {
         </div>
         <h3><WineName wine={wine} /></h3>
         <div className="sub">{wine.year && `${wine.year} · `}{varietal}</div>
+        {promo && <PromoTiers wine={wine} promo={promo} tier={tier} t={t} />}
       </div>
       <div className="row">
         <PriceBlock perBottle={wine.price} t={t} />
@@ -83,27 +96,23 @@ function WineCard({ wine, varietal, t, cartQty, onAdd, onDec }) {
   );
 }
 
-function PromoBanner({ lang }) {
-  const isPt = lang === 'pt';
-  const pct = window.LDW_PROMO.percentOff;
+function PromoBanner({ lang, promo }) {
   const t = window.STRINGS[lang];
+  const maxPct = Math.max(...Object.values(promo.percentOff).flat());
   return (
     <div className="promo-banner">
-      <strong>LDW PROMO · −{pct}%</strong>
-      <span>
-        {isPt
-          ? 'Desconto aplicado automaticamente · válido até 14 Jun 2026'
-          : `${pct}% off — applied automatically · valid until 14 Jun 2026`}
-      </span>
+      <strong>{promo.code} · {t.promoUpTo} −{maxPct}%</strong>
+      <span>{t.promoBannerText}</span>
       <span className="promo-shipping">✓ {t.freeShipping}</span>
     </div>
   );
 }
 
-function Landing({ cart, addToCart, decrementCart, lang, setLang, onGoCheckout, promoActive }) {
+function Landing({ cart, addToCart, decrementCart, lang, setLang, onGoCheckout, promo }) {
   const t = window.STRINGS[lang];
   const copy = window.WINE_COPY[lang];
   const count = cart.reduce((n, l) => n + l.qty, 0);
+  const tier = window.promoTier(promo, count);
   const [bump, setBump] = useState(false);
   const prevCount = React.useRef(count);
   useEffect(() => {
@@ -117,7 +126,7 @@ function Landing({ cart, addToCart, decrementCart, lang, setLang, onGoCheckout, 
   }, [count]);
   return (
     <div className="dir-b" data-screen-label="Landing">
-      {promoActive && <PromoBanner lang={lang} />}
+      {promo && <PromoBanner lang={lang} promo={promo} />}
       <header className="nav">
         <div className="logomark">
           FERRADOSA
@@ -143,6 +152,8 @@ function Landing({ cart, addToCart, decrementCart, lang, setLang, onGoCheckout, 
               cartQty={line ? line.qty : 0}
               onAdd={() => addToCart(w)}
               onDec={() => decrementCart(w.id)}
+              promo={promo}
+              tier={tier}
             />
           );
         })}
@@ -159,11 +170,11 @@ function Landing({ cart, addToCart, decrementCart, lang, setLang, onGoCheckout, 
   );
 }
 
-function CartLine({ line, t, setQty, onRemove, promoActive }) {
-  const bottleNow = window.discountedPrice(line.price);
-  const boxNow = window.boxPrice(bottleNow);
-  const lineFull = line.qty * window.boxPrice(line.price);
-  const lineNow = line.qty * boxNow;
+function CartLine({ line, priced, t, setQty, onRemove }) {
+  const boxNow = priced.boxCents - priced.perBoxDiscountCents;
+  const bottleNow = priced.pct ? window.discountedBottleCents(priced.boxCents, priced.pct) : Math.round(priced.boxCents / 6);
+  const lineFull = priced.boxCents * line.qty;
+  const lineNow = lineFull - priced.lineDiscountCents;
   return (
     <div className="line">
       <div className="ph"><img src={line.img} alt="" /></div>
@@ -171,7 +182,7 @@ function CartLine({ line, t, setQty, onRemove, promoActive }) {
         <div className="nm"><WineName wine={line} /></div>
         <div className="m">{line.year && `${line.year} · `}{t.caseOf6}</div>
         <div className="m-prices">
-          {window.fmtEUR(bottleNow)} {t.perBottleAbbrev} · {window.fmtEUR(boxNow)} {t.perCaseAbbrev}
+          {fmtCents(bottleNow)} {t.perBottleAbbrev} · {fmtCents(boxNow)} {t.perCaseAbbrev}
         </div>
       </div>
       <div className="line-qty">
@@ -185,16 +196,53 @@ function CartLine({ line, t, setQty, onRemove, promoActive }) {
         </button>
       </div>
       <div className="lp">
-        <span className="lp-now">{window.fmtEUR(lineNow)}</span>
-        {promoActive && lineFull !== lineNow && (
-          <span className="lp-was">{window.fmtEUR(lineFull)}</span>
-        )}
+        <span className="lp-now">{fmtCents(lineNow)}</span>
+        {lineFull !== lineNow && <span className="lp-was">{fmtCents(lineFull)}</span>}
       </div>
     </div>
   );
 }
 
-function Checkout({ cart, setCart, lang, setLang, onBack, promoActive }) {
+function PromoCodeForm({ promo, setPromoCode, t }) {
+  const [open, setOpen] = useState(false);
+  const [value, setValue] = useState('');
+  const [invalid, setInvalid] = useState(false);
+  if (promo) {
+    return (
+      <div className="promo-code active">
+        <span>{promo.code} ✓</span>
+        <button type="button" onClick={() => setPromoCode(null)}>{t.codeRemove}</button>
+      </div>
+    );
+  }
+  if (!open) {
+    return (
+      <div className="promo-code">
+        <button type="button" className="promo-code-toggle" onClick={() => setOpen(true)}>{t.haveCode}</button>
+      </div>
+    );
+  }
+  const apply = (e) => {
+    e.preventDefault();
+    if (window.findPromo(value)) { setPromoCode(value.trim().toUpperCase()); setInvalid(false); }
+    else setInvalid(true);
+  };
+  return (
+    <form className="promo-code" onSubmit={apply}>
+      <input
+        value={value}
+        onChange={(e) => { setValue(e.target.value); setInvalid(false); }}
+        placeholder={t.codePlaceholder}
+        aria-label={t.codePlaceholder}
+        autoFocus
+      />
+      <button type="submit">{t.codeApply}</button>
+      {invalid && <p className="promo-code-error">{t.codeInvalid}</p>}
+    </form>
+  );
+}
+
+function Checkout({ cart, setCart, lang, setLang, onBack, promo, setPromoCode }) {
   const t = window.STRINGS[lang];
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
@@ -213,14 +261,11 @@ function Checkout({ cart, setCart, lang, setLang, onBack, promoActive }) {
     return () => window.removeEventListener('pageshow', onShow);
   }, []);
 
-  const subtotalFull = cart.reduce((s, l) => s + l.qty * window.boxPrice(l.price), 0);
-  const subtotalNow = cart.reduce(
-    (s, l) => s + l.qty * window.boxPrice(window.discountedPrice(l.price)),
-    0
+  const quote = window.quotePromo(
+    promo,
+    cart.map((l) => ({ id: l.id, qty: l.qty, boxCents: window.boxCents(l.price) }))
   );
-  const discount = subtotalFull - subtotalNow;
-  const total = subtotalNow;
-  const totalCases = cart.reduce((n, l) => n + l.qty, 0);
+  const totalCases = quote.totalBoxes;
   const totalBottles = totalCases * window.BOTTLES_PER_BOX;
 
   const setQty = (id, q) => {
@@ -251,6 +296,7 @@ function Checkout({ cart, setCart, lang, setLang, onBack, promoActive }) {
         body: JSON.stringify({
           items: cart.map((l) => ({ wine_id: l.id, qty: l.qty })),
           lang,
+          promo: promo ? promo.code : null,
           successUrl: window.STRIPE_SUCCESS_URL,
           cancelUrl: window.STRIPE_CANCEL_URL,
         }),
@@ -270,7 +316,7 @@ function Checkout({ cart, setCart, lang, setLang, onBack, promoActive }) {
 
   return (
     <div className="dir-b" data-screen-label="Checkout">
-      {promoActive && <PromoBanner lang={lang} />}
+      {promo && <PromoBanner lang={lang} promo={promo} />}
       <header className="nav">
         <button className="back-link" onClick={onBack} aria-label={t.backToShop}>
           <span className="back-arrow">←</span>
@@ -300,29 +346,36 @@ function Checkout({ cart, setCart, lang, setLang, onBack, promoActive }) {
               </span>
             </header>
             <div className="lines">
-              {cart.map((l) => (
+              {cart.map((l, i) => (
                 <CartLine
                   key={l.id}
                   line={l}
+                  priced={quote.lines[i]}
                   t={t}
                   setQty={setQty}
                   onRemove={removeLine}
-                  promoActive={promoActive}
                 />
               ))}
             </div>
+            {quote.next && quote.next.discountCents > 0 && (
+              <p className="promo-nudge">{t.promoNudge(quote.next.boxesNeeded, fmtCents(quote.next.discountCents), quote.discountCents > 0)}</p>
+            )}
           </section>
 
           <aside className="right">
             <div className="right-inner">
-              {promoActive && discount > 0 && (
+              <PromoCodeForm promo={promo} setPromoCode={setPromoCode} t={t} />
+              {quote.discountCents > 0 && (
                 <div className="totals-pre">
-                  <div className="r"><span>{t.subtotal}</span><span>{window.fmtEUR(subtotalFull)}</span></div>
-                  <div className="r discount"><span>{t.discount}</span><span>−{window.fmtEUR(discount)}</span></div>
+                  <div className="r"><span>{t.subtotal}</span><span>{fmtCents(quote.subtotalCents)}</span></div>
+                  <div className="r discount">
+                    <span>{t.promoDiscount(promo.code, promo.tiers[quote.tier])}</span>
+                    <span>−{fmtCents(quote.discountCents)}</span>
+                  </div>
                 </div>
               )}
               <div className="total-label">{t.total}</div>
-              <div className="total-amount">{window.fmtEUR(total)}</div>
+              <div className="total-amount">{fmtCents(quote.totalCents)}</div>
               <div className="total-vat">{t.taxIncl}</div>
               <div className="shipping-note">✓ {t.freeShipping}</div>
               <button
@@ -396,6 +449,19 @@ function AgeGate({ onConfirm }) {
 // ── Top-level app ──────────────────────────────────────────────────────
 
 const CART_KEY = 'ferradosa-cart-v1';
+const PROMO_KEY = 'ferradosa-promo-code';
+
+// Runs before the history effect strips ?code= from the URL.
+function loadPromoCode() {
+  let fromUrl = null;
+  try { fromUrl = new URLSearchParams(window.location.search).get('code'); } catch (e) {}
+  if (window.findPromo(fromUrl)) return fromUrl.trim().toUpperCase();
+  try {
+    const stored = localStorage.getItem(PROMO_KEY);
+    if (window.findPromo(stored)) return stored;
+  } catch (e) {}
+  return null;
+}
 
 function loadCart() {
   try {
@@ -426,7 +492,8 @@ function App() {
   const [cart, setCart] = useState(loadCart);
   const [lang, setLang] = useState('pt');
   const [view, setView] = useState(urlToView);
-  const [promoActive] = useState(() => window.isPromoActive());
+  const [promoCode, setPromoCode] = useState(loadPromoCode);
+  const promo = window.findPromo(promoCode);
   const [adult, setAdult] = useState(() => {
     try { return !!localStorage.getItem('ferradosa-age-confirmed'); }
     catch (e) { return false; }
@@ -438,6 +505,13 @@ function App() {
       localStorage.setItem(CART_KEY, JSON.stringify(stripped));
     } catch (e) {}
   }, [cart]);
+
+  useEffect(() => {
+    try {
+      if (promoCode) localStorage.setItem(PROMO_KEY, promoCode);
+      else localStorage.removeItem(PROMO_KEY);
+    } catch (e) {}
+  }, [promoCode]);
 
   // Wire browser history so the phone/desktop back button navigates between
   // landing and checkout within the SPA instead of leaving the site.
@@ -493,7 +567,8 @@ function App() {
           lang={lang}
           setLang={setLang}
           onBack={goBack}
-          promoActive={promoActive}
+          promo={promo}
+          setPromoCode={setPromoCode}
         />
       ) : (
         <Landing
@@ -503,7 +578,7 @@ function App() {
           lang={lang}
           setLang={setLang}
           onGoCheckout={() => navigateTo('checkout')}
-          promoActive={promoActive}
+          promo={promo}
         />
       )}
     </>

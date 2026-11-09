@@ -784,7 +784,7 @@
 /* ── Position the age-gate as a fixed full-viewport overlay on the live page. */
 .age-gate { position: fixed; inset: 0; }
 
-/* ── LDW promo banner ──────────────────────────────────────────────── */
+/* ── Promo banner ──────────────────────────────────────────────── */
 .dir-b .promo-banner {
   display: flex; align-items: center; justify-content: center;
   gap: 16px;
@@ -934,3 +934,70 @@
   .dir-b .promo-banner { padding: 10px 16px; font-size: 11px; gap: 10px; }
   .dir-b .promo-banner .promo-shipping { font-size: 10px; letter-spacing: 0.14em; }
 }
+
+/* ── Promo tiers (wine card), code field and nudge (cart) ──────────── */
+.dir-b .wall .promo-tiers {
+  margin: -6px 0 16px;
+  font-size: 12px;
+}
+.dir-b .wall .promo-tiers-head {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  opacity: 0.55;
+  margin-bottom: 4px;
+}
+.dir-b .wall .promo-tiers .tier {
+  display: flex; align-items: baseline; gap: 10px;
+  padding: 3px 6px;
+  margin: 0 -6px;
+}
+.dir-b .wall .promo-tiers .tier-min { flex: 1; opacity: 0.7; }
+.dir-b .wall .promo-tiers .tier-price { font-weight: 600; color: var(--wine); }
+.dir-b .wall .promo-tiers .tier-pct {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  opacity: 0.55;
+  min-width: 34px; text-align: right;
+}
+.dir-b .wall .promo-tiers .tier.on { background: rgba(107, 26, 38, 0.08); }
+
+.dir-b .co .promo-nudge {
+  margin: 16px 0 0;
+  padding: 10px 12px;
+  border: 1px dashed rgba(107, 26, 38, 0.4);
+  color: var(--wine);
+  font-size: 13px;
+}
+.dir-b .co .promo-code {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+  margin-bottom: 20px;
+  font-size: 12px;
+}
+.dir-b .co .promo-code button {
+  background: none; border: none; padding: 0;
+  font: inherit; color: var(--ink); opacity: 0.65;
+  text-decoration: underline; cursor: pointer;
+}
+.dir-b .co .promo-code.active span {
+  font-family: 'DM Mono', monospace;
+  letter-spacing: 0.12em;
+  color: var(--wine);
+}
+.dir-b .co .promo-code input {
+  flex: 1; min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--rule);
+  background: transparent;
+  font: inherit; font-family: 'DM Mono', monospace;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--ink);
+}
+.dir-b .co .promo-code button[type="submit"] {
+  padding: 8px 14px;
+  background: var(--ink); color: var(--paper);
+  text-decoration: none; opacity: 1;
+  letter-spacing: 0.12em; text-transform: uppercase; font-size: 11px;
+}
+.dir-b .co .promo-code-error { width: 100%; margin: 0; color: var(--wine); }
