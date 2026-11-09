@@ -105,3 +105,17 @@ test('coupon creation failure returns 502 and creates no session', async () => {
   assert.ok(couponCall());
   assert.equal(sessionCall(), undefined);
 });
+
+test('expected total that differs from server prices: 409 price_mismatch, nothing created in Stripe', async () => {
+  const r = await checkout({ items: [{ wine_id: 'branco', qty: 2 }], promo: 'TECA', expectedTotalCents: 15000 });
+  assert.equal(r.status, 409);
+  assert.equal((await r.json()).code, 'price_mismatch');
+  assert.equal(couponCall(), undefined);
+  assert.equal(sessionCall(), undefined);
+});
+
+test('expected total that matches proceeds to checkout', async () => {
+  const r = await checkout({ items: [{ wine_id: 'branco', qty: 2 }], promo: 'TECA', expectedTotalCents: 19140 - 2 * 1914 });
+  assert.equal(r.status, 200);
+  assert.ok(sessionCall());
+});

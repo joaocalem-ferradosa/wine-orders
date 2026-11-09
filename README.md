@@ -12,7 +12,7 @@ Landing page + checkout for Quinta da Ferradosa direct sales. Stripe Checkout ha
 4. `npm install`
 5. `npm run setup-stripe` — creates one product + box price per wine in `data.js` and the free-shipping rate for mainland PT. Idempotent; safe to re-run. Writes `stripe-prices.json` with a live key, `stripe-prices.test.json` (gitignored) with a test key.
 6. Get your **publishable key** (`pk_test_…`) from the same Dashboard page and paste it into `stripe-config.js`.
-7. Commit `stripe-prices.json` + the updated `stripe-config.js` and push. GitHub Pages rebuilds in ~30s.
+7. `npm run check-prices` — confirms `stripe-prices.json` matches every price in `data.js`. Then commit `stripe-prices.json` + the updated `stripe-config.js` and push. GitHub Pages rebuilds in ~30s.
 
 When the live account is approved, repeat 2–6 with the `sk_live_…` / `pk_live_…` keys (live and test are separate worlds in Stripe).
 

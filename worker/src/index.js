@@ -183,7 +183,7 @@ async function handleCheckout(request, env) {
     return json({ error: 'invalid json' }, 400, origin);
   }
 
-  const { items, lang, promo, successUrl, cancelUrl } = payload || {};
+  const { items, lang, promo, expectedTotalCents, successUrl, cancelUrl } = payload || {};
   if (!Array.isArray(items) || items.length === 0) {
     return json({ error: 'no items' }, 400, origin);
   }
@@ -209,6 +209,10 @@ async function handleCheckout(request, env) {
   }
   const activePromo = findPromo(promo);
   const quote = quotePromo(activePromo, quoteLines);
+  // Page and Worker price from different files (data.js vs stripe-prices.json); refuse if they disagree.
+  if (Number.isInteger(expectedTotalCents) && expectedTotalCents !== quote.totalCents) {
+    return json({ error: 'prices changed', code: 'price_mismatch' }, 409, origin);
+  }
 
   const sessionBody = {
     mode: 'payment',

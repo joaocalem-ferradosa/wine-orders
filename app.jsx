@@ -297,13 +297,16 @@ function Checkout({ cart, setCart, lang, setLang, onBack, promo, setPromoCode })
           items: cart.map((l) => ({ wine_id: l.id, qty: l.qty })),
           lang,
           promo: promo ? promo.code : null,
+          expectedTotalCents: quote.totalCents,
           successUrl: window.STRIPE_SUCCESS_URL,
           cancelUrl: window.STRIPE_CANCEL_URL,
         }),
       });
       const data = await r.json().catch(() => ({}));
       if (!r.ok || !data.url) {
-        setError(data.error || (lang === 'pt' ? 'Erro ao iniciar pagamento.' : 'Failed to start checkout.'));
+        setError(data.code === 'price_mismatch'
+          ? t.pricesChanged
+          : data.error || (lang === 'pt' ? 'Erro ao iniciar pagamento.' : 'Failed to start checkout.'));
         setSubmitting(false);
         return;
       }

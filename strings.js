@@ -40,6 +40,7 @@ window.STRINGS = {
     promoNudge: (n, eur, hasDiscount) =>
       `Adicione mais ${n} ${n === 1 ? 'caixa' : 'caixas'} e ${hasDiscount ? 'o desconto sobe para' : 'poupe'} pelo menos ${eur}`,
     haveCode: 'Tem um código?',
+    pricesChanged: 'Os preços foram atualizados. Recarregue a página e tente novamente.',
     codePlaceholder: 'Código',
     codeApply: 'Aplicar',
     codeInvalid: 'Código inválido ou expirado',
@@ -104,6 +105,7 @@ window.STRINGS = {
     promoNudge: (n, eur, hasDiscount) =>
       `Add ${n} more ${n === 1 ? 'case' : 'cases'} and ${hasDiscount ? 'your discount rises to' : 'save'} at least ${eur}`,
     haveCode: 'Have a code?',
+    pricesChanged: 'Prices were just updated. Please reload the page and try again.',
     codePlaceholder: 'Code',
     codeApply: 'Apply',
     codeInvalid: 'Invalid or expired code',
