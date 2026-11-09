@@ -10,16 +10,21 @@ Landing page + checkout for Quinta da Ferradosa direct sales. Stripe Checkout ha
 2. Get your **secret key** from <https://dashboard.stripe.com/apikeys> (start with the test key `sk_test_…`).
 3. `cp .env.example .env` and paste the secret key.
 4. `npm install`
-5. `npm run setup-stripe` — creates products, prices, the `LDW` promo code (30% off, expires 14 Jun 2026) and the free-shipping rate for mainland PT. Idempotent; safe to re-run. Writes `stripe-prices.json`.
+5. `npm run setup-stripe` — creates one product + box price per wine in `data.js` and the free-shipping rate for mainland PT. Idempotent; safe to re-run. Writes `stripe-prices.json` with a live key, `stripe-prices.test.json` (gitignored) with a test key.
 6. Get your **publishable key** (`pk_test_…`) from the same Dashboard page and paste it into `stripe-config.js`.
-7. In the Stripe Dashboard, go to **Settings → Checkout and Payment Links** and toggle **"Allow promotion codes"** on, so customers can type `LDW` at checkout.
-8. Commit `stripe-prices.json` + the updated `stripe-config.js` and push. GitHub Pages rebuilds in ~30s.
+7. Commit `stripe-prices.json` + the updated `stripe-config.js` and push. GitHub Pages rebuilds in ~30s.
 
-When the live account is approved, repeat 2–7 with the `sk_live_…` / `pk_live_…` keys (live and test are separate worlds in Stripe).
+When the live account is approved, repeat 2–6 with the `sk_live_…` / `pk_live_…` keys (live and test are separate worlds in Stripe).
 
-## QR / event link
+## Promo codes
 
-The card QR points to `https://orders.ferradosa.com/?code=LDW` — the page detects the param and shows the LDW banner telling customers to type `LDW` at checkout.
+Rules live in `promo.js` (per-wine % by total boxes, expiry), shared by the page and the Worker. Current: **TECA** — 2+ / 6+ boxes, until 31 Dec 2026. Link: `https://orders.ferradosa.com/?code=TECA` (the page remembers it); customers can also type it in the cart. Changing a promo needs a Worker redeploy.
+
+## Tests
+
+```sh
+npm test
+```
 
 ## Local dev
 
@@ -32,7 +37,8 @@ python3 -m http.server 8765
 
 - `index.html` — entry point
 - `app.jsx` — React app (landing + checkout + age gate) — runs via Babel-standalone in the browser
-- `data.js` — wine catalog (prices, stock)
+- `data.js` — wine catalog (prices, stock); also the source for `setup-stripe`
+- `promo.js` — promo code rules + discount calculation (page and Worker)
 - `strings.js` — PT / EN copy
 - `styles.css` — visuals (from Claude design)
 - `stripe-config.js` — publishable key + redirect URLs

@@ -32,20 +32,21 @@ npx wrangler secret put STRIPE_SECRET_KEY
 npx wrangler deploy
 ```
 
-The Worker reads price/coupon/shipping IDs from `https://orders.ferradosa.com/stripe-prices.json`, so re-running `npm run setup-stripe` (in the parent dir) and pushing is enough — no Worker redeploy needed when prices change.
+The Worker reads price/shipping IDs from `https://orders.ferradosa.com/stripe-prices.json` (override with the `PRICES_URL` var), so re-running `npm run setup-stripe` (in the parent dir) and pushing is enough — no Worker redeploy needed when prices change. Promo rules (`../promo.js`) are bundled in, so changing a promo **does** need `npx wrangler deploy`.
 
 ## Local dev
 
 ```sh
 cp .dev.vars.example .dev.vars  # paste sk_test_... into .dev.vars
+echo 'PRICES_URL=http://localhost:8765/stripe-prices.test.json' >> .dev.vars
 npx wrangler dev                # serves at http://localhost:8787
 ```
 
-Then from the static page running on `localhost`, point `window.CHECKOUT_URL` at `http://localhost:8787/checkout`.
+The page uses `http://localhost:8787/checkout` automatically when served from `localhost`.
 
 ## Endpoints
 
-- `POST /checkout` — create a Checkout Session. Body: `{items, lang, promo, successUrl, cancelUrl}`. Returns `{url}` or `{error}`.
+- `POST /checkout` — create a Checkout Session. Body: `{items, lang, promo, successUrl, cancelUrl}`. A valid `promo` (see `../promo.js`) becomes a single-use `amount_off` coupon on the session; otherwise customers can type Stripe promotion codes. Returns `{url}` or `{error}`.
 - `GET /` — health check.
 - `OPTIONS /checkout` — CORS preflight.
 
