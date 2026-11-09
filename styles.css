@@ -106,7 +106,7 @@
 /* ── Bottle wall ───────────────────────────────────────────────────── */
 .dir-b .wall {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   padding: 40px 56px 0;
   border-bottom: 1px solid var(--ink);
   position: relative;
@@ -830,12 +830,17 @@
   line-height: 1.45;
 }
 
+@media (min-width: 1025px) {
+  .dir-b .wall .col:nth-child(3n) { border-right: none; }
+  .dir-b .wall .col:not(:nth-last-child(-n+3)) { border-bottom: 1px solid var(--rule-soft); }
+}
+
 /* ── Tablet ────────────────────────────────────────────────────────── */
 @media (max-width: 1024px) {
   .dir-b .nav { padding: 24px 32px; }
   .dir-b .wall { grid-template-columns: repeat(2, 1fr); padding: 32px 32px 0; }
   .dir-b .wall .col:nth-child(2n) { border-right: none; }
-  .dir-b .wall .col:nth-child(-n+2) { border-bottom: 1px solid var(--rule-soft); }
+  .dir-b .wall .col:not(:nth-last-child(-n+2)) { border-bottom: 1px solid var(--rule-soft); }
   .dir-b .footer { padding: 24px 32px; flex-wrap: wrap; gap: 8px; }
   .dir-b .co { grid-template-columns: 1fr; }
   .dir-b .co .right { border-left: none; border-top: 1px solid var(--rule-soft); }

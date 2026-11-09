@@ -30,16 +30,20 @@ function WineName({ wine }) {
 
 const fmtCents = (c) => window.fmtEUR(c / 100);
 
-function PriceBlock({ perBottle, t }) {
+function PriceBlock({ perBottle, pct, t }) {
+  const box = window.boxCents(perBottle);
+  const bottleNow = pct ? window.discountedBottleCents(box, pct) : Math.round(perBottle * 100);
+  const boxNow = pct ? box - Math.round((box * pct) / 100) : box;
   return (
     <div className="price">
       <div className="price-bottle">
-        <span className="price-now">{window.fmtEUR(perBottle)}</span>
+        <span className="price-now">{fmtCents(bottleNow)}</span>
+        {pct > 0 && <span className="price-was">{window.fmtEUR(perBottle)}</span>}
         <span className="price-unit">{t.perBottle}</span>
       </div>
       <div className="price-box">
         <span className="price-box-eq">× {window.BOTTLES_PER_BOX} {t.bottles}</span>
-        <span className="price-box-result">= {window.fmtEUR(window.boxPrice(perBottle))} / {t.caseOf6}</span>
+        <span className="price-box-result">= {fmtCents(boxNow)} / {t.caseOf6}</span>
       </div>
     </div>
   );
@@ -79,7 +83,11 @@ function WineCard({ wine, varietal, t, cartQty, onAdd, onDec, promo, tier }) {
         {promo && <PromoTiers wine={wine} promo={promo} tier={tier} t={t} />}
       </div>
       <div className="row">
-        <PriceBlock perBottle={wine.price} t={t} />
+        <PriceBlock
+          perBottle={wine.price}
+          pct={promo && tier >= 0 ? (promo.percentOff[wine.id] || [])[tier] || 0 : 0}
+          t={t}
+        />
         {!wine.stock ? (
           <button disabled>{t.outOfStock}</button>
         ) : cartQty > 0 ? (
