@@ -4,7 +4,7 @@
 //   body: {
 //     items: [{ wine_id: 'branco', qty: 1 }, ...],
 //     lang:  'pt' | 'en',
-//     promo: 'LDW' | null,
+//     promo: 'TECA' | null,
 //     successUrl?: string,
 //     cancelUrl?:  string
 //   }
@@ -15,20 +15,19 @@
 // stripe-prices.json on the site, so re-running `npm run setup-stripe`
 // updates the Worker without redeploying.
 
-const PRICES_URL = 'https://orders.ferradosa.com/stripe-prices.json';
+import '../../promo.js';
+
+const DEFAULT_PRICES_URL = 'https://orders.ferradosa.com/stripe-prices.json';
 const ALLOWED_ORIGIN = 'https://orders.ferradosa.com';
 const PRICES_TTL_MS = 60_000;
-
-// 2026-06-14 23:00 UTC ≈ end-of-day Lisbon
-const LDW_DEADLINE_MS = Date.UTC(2026, 5, 14, 23, 0, 0);
 
 let pricesCache = null;
 let pricesFetchedAt = 0;
 
-async function getPrices() {
+async function getPrices(env) {
   const now = Date.now();
   if (pricesCache && now - pricesFetchedAt < PRICES_TTL_MS) return pricesCache;
-  const r = await fetch(PRICES_URL, { cf: { cacheTtl: 30 } });
+  const r = await fetch(env.PRICES_URL || DEFAULT_PRICES_URL, { cf: { cacheTtl: 30 } });
   if (!r.ok) throw new Error(`prices fetch failed: ${r.status}`);
   pricesCache = await r.json();
   pricesFetchedAt = now;
@@ -82,9 +81,9 @@ function flatten(obj, prefix = '') {
   return out;
 }
 
-async function createStripeSession(secretKey, body) {
+async function stripePost(secretKey, path, body) {
   const flat = flatten(body);
-  const r = await fetch('https://api.stripe.com/v1/checkout/sessions', {
+  const r = await fetch(`https://api.stripe.com/v1/${path}`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${secretKey}`,
@@ -184,7 +183,7 @@ async function handleCheckout(request, env) {
     return json({ error: 'invalid json' }, 400, origin);
   }
 
-  const { items, lang, successUrl, cancelUrl } = payload || {};
+  const { items, lang, promo, successUrl, cancelUrl } = payload || {};
   if (!Array.isArray(items) || items.length === 0) {
     return json({ error: 'no items' }, 400, origin);
   }
@@ -194,18 +193,22 @@ async function handleCheckout(request, env) {
 
   let prices;
   try {
-    prices = await getPrices();
+    prices = await getPrices(env);
   } catch (e) {
     return json({ error: 'price config unavailable' }, 502, origin);
   }
 
   const lineItems = [];
+  const quoteLines = [];
   for (const it of items) {
     const ref = prices.wines && prices.wines[it.wine_id];
     if (!ref) return json({ error: `unknown wine_id: ${it.wine_id}` }, 400, origin);
     const qty = Math.max(1, Math.min(99, parseInt(it.qty, 10) || 1));
     lineItems.push({ price: ref.price_id, quantity: qty });
+    quoteLines.push({ id: it.wine_id, qty, boxCents: ref.box_price_cents });
   }
+  const activePromo = findPromo(promo);
+  const quote = quotePromo(activePromo, quoteLines);
 
   const sessionBody = {
     mode: 'payment',
@@ -227,20 +230,28 @@ async function handleCheckout(request, env) {
     sessionBody.shipping_options = [{ shipping_rate: prices.shipping.shipping_rate_id }];
   }
 
-  // LDW promo: always auto-apply within the campaign window.
-  // After the deadline, fall back to manual promo entry.
-  const now = Date.now();
-  if (
-    now <= LDW_DEADLINE_MS &&
-    prices.promotion &&
-    prices.promotion.coupon_id
-  ) {
-    sessionBody.discounts = [{ coupon: prices.promotion.coupon_id }];
+  // Stripe allows one discount per session, so the per-wine tier discount becomes a single-use coupon.
+  if (quote.discountCents > 0) {
+    const minBoxes = activePromo.tiers[quote.tier];
+    const coupon = await stripePost(env.STRIPE_SECRET_KEY, 'coupons', {
+      amount_off: quote.discountCents,
+      currency: 'eur',
+      duration: 'once',
+      max_redemptions: 1,
+      redeem_by: Math.floor(Date.now() / 1000) + 25 * 3600,
+      name: `${activePromo.code} (${minBoxes}+ ${lang === 'en' ? 'cases' : 'caixas'})`,
+      metadata: { promo: activePromo.code, tier: String(quote.tier) },
+    });
+    if (coupon.error || !coupon.id) {
+      return json({ error: (coupon.error && coupon.error.message) || 'coupon error' }, 502, origin);
+    }
+    sessionBody.discounts = [{ coupon: coupon.id }];
+    sessionBody.metadata = { promo: activePromo.code };
   } else {
     sessionBody.allow_promotion_codes = true;
   }
 
-  const session = await createStripeSession(env.STRIPE_SECRET_KEY, sessionBody);
+  const session = await stripePost(env.STRIPE_SECRET_KEY, 'checkout/sessions', sessionBody);
   if (session.error) {
     return json({ error: session.error.message || 'stripe error' }, 502, origin);
   }
