@@ -128,7 +128,9 @@
   filter: drop-shadow(0 18px 24px rgba(0,0,0,0.12));
   transition: transform 0.4s cubic-bezier(.2,.7,.3,1);
 }
-.dir-b .wall .col:hover .ph img { transform: translateY(-8px); }
+@media (hover: hover) and (pointer: fine) {
+  .dir-b .wall .col:hover .ph img { transform: translateY(-8px); }
+}
 .dir-b .wall .col.oos .ph img { opacity: 0.55; filter: grayscale(0.4) drop-shadow(0 18px 24px rgba(0,0,0,0.08)); }
 .dir-b .wall .info { padding: 28px 28px 0; }
 .dir-b .wall .n {
