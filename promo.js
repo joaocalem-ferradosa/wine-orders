@@ -32,6 +32,8 @@
   const boxCents = (perBottleEur) => Math.round(perBottleEur * 600);
   const perBoxDiscount = (cents, pct) => Math.round((cents * pct) / 100);
   const discountedBottleCents = (cents, pct) => Math.round((cents - perBoxDiscount(cents, pct)) / 6);
+  // Same as the order desk's applyDiscount: round the amount retained on the whole line.
+  const lineDiscount = (lineCents, pct) => lineCents - Math.round((lineCents * (10000 - pct * 100)) / 10000);
   const pctFor = (promo, id, tier) =>
     promo && tier >= 0 ? ((promo.percentOff[id] || [])[tier] || 0) : 0;
 
@@ -39,7 +41,7 @@
     return lines.map((l) => {
       const pct = pctFor(promo, l.id, tier);
       const perBoxDiscountCents = perBoxDiscount(l.boxCents, pct);
-      return { ...l, pct, perBoxDiscountCents, lineDiscountCents: perBoxDiscountCents * l.qty };
+      return { ...l, pct, perBoxDiscountCents, lineDiscountCents: lineDiscount(l.boxCents * l.qty, pct) };
     });
   }
 
