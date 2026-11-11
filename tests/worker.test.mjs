@@ -71,6 +71,15 @@ test('TECA (any case) on Branco + Tinto: one coupon for the summed first-tier di
   assert.equal(s['discounts[0][coupon]'], 'cpn_test');
   assert.equal(s.allow_promotion_codes, undefined);
   assert.equal(s['metadata[promo]'], 'TECA');
+  assert.equal(s['metadata[cart]'], 'branco:1:9570:2000,tinto:1:13770:2000');
+});
+
+test('cart metadata merges a repeated wine and is written without a promo', async () => {
+  await checkout({ items: [{ wine_id: 'rose', qty: 1 }, { wine_id: 'rose', qty: 2 }, { wine_id: 'ferro-tinto', qty: 1 }] });
+  const s = sessionCall().form;
+  assert.equal(s['metadata[cart]'], 'rose:3:6270:0,ferro-tinto:1:2670:0');
+  assert.equal(s['line_items[0][quantity]'], '1');
+  assert.equal(s['metadata[promo]'], undefined);
 });
 
 test('TECA on 6 Branco in English: 30% tier coupon', async () => {
