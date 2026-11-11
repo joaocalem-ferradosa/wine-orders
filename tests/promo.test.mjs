@@ -59,7 +59,14 @@ test('quote: 1 Ferro box has no discount and a nudge to 2 boxes', () => {
   const q = quotePromo(TECA(), [line('ferro-branco', 1)]);
   assert.equal(q.tier, -1);
   assert.equal(q.discountCents, 0);
-  assert.deepEqual(q.next, { minBoxes: 2, boxesNeeded: 1, discountCents: 134 });
+  assert.deepEqual(q.next, { minBoxes: 2, boxesNeeded: 1, discountCents: 133 });
+});
+
+test('quote: a half-cent discount rounds like the order desk (amount kept, per line)', () => {
+  // 3 × 26,70 = 80,10; 95% of it is 76,095 → kept 76,10, so 4,00 off (per box would give 3 × 1,34 = 4,02).
+  const q = quotePromo(TECA(), [line('ferro-branco', 3)]);
+  assert.equal(q.lines[0].lineDiscountCents, 400);
+  assert.equal(q.totalCents, 7610);
 });
 
 test('quote: 3 Rosé nudges to the 6-box tier, priced on the current cart', () => {

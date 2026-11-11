@@ -207,8 +207,14 @@ async function handleCheckout(request, env) {
     lineItems.push({ price: ref.price_id, quantity: qty });
     quoteLines.push({ id: it.wine_id, qty, boxCents: ref.box_price_cents });
   }
+  // The same wine twice in the request is one line: the order desk refuses duplicates.
+  const merged = [];
+  for (const l of quoteLines) {
+    const m = merged.find((x) => x.id === l.id);
+    if (m) m.qty += l.qty; else merged.push({ ...l });
+  }
   const activePromo = findPromo(promo);
-  const quote = quotePromo(activePromo, quoteLines);
+  const quote = quotePromo(activePromo, merged);
   // Page and Worker price from different files (data.js vs stripe-prices.json); refuse if they disagree.
   if (Number.isInteger(expectedTotalCents) && expectedTotalCents !== quote.totalCents) {
     return json({ error: 'prices changed', code: 'price_mismatch' }, 409, origin);
@@ -228,6 +234,12 @@ async function handleCheckout(request, env) {
     phone_number_collection: { enabled: true },
     // Optional Portuguese NIF / EU VAT ID, used for the TOConline invoice.
     tax_id_collection: { enabled: true },
+  };
+
+  // Read by the order desk's webhook: wine:boxes:boxCents:discountBps. Stripe spreads the coupon
+  // across lines pro rata, so its own line items cannot say which wine got which discount.
+  sessionBody.metadata = {
+    cart: quote.lines.map((l) => `${l.id}:${l.qty}:${l.boxCents}:${l.pct * 100}`).join(','),
   };
 
   if (prices.shipping && prices.shipping.shipping_rate_id) {
@@ -250,7 +262,7 @@ async function handleCheckout(request, env) {
       return json({ error: (coupon.error && coupon.error.message) || 'coupon error' }, 502, origin);
     }
     sessionBody.discounts = [{ coupon: coupon.id }];
-    sessionBody.metadata = { promo: activePromo.code };
+    sessionBody.metadata.promo = activePromo.code;
   } else {
     sessionBody.allow_promotion_codes = true;
   }
